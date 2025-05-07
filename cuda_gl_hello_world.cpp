@@ -326,7 +326,7 @@ int main(int arc, char** argvv) {
 
 	draw_simple_triangle(window);
 
-	if (true) {
+	if (false) {
 		execute_kernel();
 
 		window = init_gl();
