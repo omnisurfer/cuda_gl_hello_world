@@ -15,9 +15,16 @@
     <None Include="shaders\triangle_shader.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\cube_shader.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\cube_shader.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cuda_gl_hello_world.cpp" />
     <ClCompile Include="gl.c" />
+    <ClCompile Include="cuda_gl_utils.cpp" />
   </ItemGroup>
 </Project>

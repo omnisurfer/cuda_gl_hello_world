@@ -1,13 +1,13 @@
 # version 410 core
 
-in vec3 vertex_position;
-uniform float time;
-out vec3 pos;
+layout(location = 0) in vec3 vertex_position;
+layout(location = 1) in vec3 vertex_color;
+
+out vec3 color;
 
 void main() {
-	
-	pos = vertex_position;
-	pos.y += sin(time);
 
-	gl_Position = vec4(pos, 1.0);
+	color = vertex_color;
+	gl_Position = vec4(vertex_position, 1.0);
+
 };
