@@ -4,12 +4,8 @@
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cuda_gl_hello_world.cpp" />
-    <ClCompile Include="gl.c" />
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="shaders">
-      <UniqueIdentifier>{dbad7f56-22a8-48bd-9bce-a61c1c94b255}</UniqueIdentifier>
+      <UniqueIdentifier>{b0e15d40-d6c8-4c96-aed1-c38e110dabde}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
