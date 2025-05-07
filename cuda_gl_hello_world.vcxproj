@@ -88,6 +88,7 @@
     <ClCompile Include="gl.c" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="kernel.cu" />
     <None Include="shaders\triangle_shader.frag" />
     <None Include="shaders\triangle_shader.vert" />
   </ItemGroup>
