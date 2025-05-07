@@ -16,4 +16,8 @@
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cuda_gl_hello_world.cpp" />
+    <ClCompile Include="gl.c" />
+  </ItemGroup>
 </Project>
