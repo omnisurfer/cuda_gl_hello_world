@@ -197,7 +197,15 @@ int draw_simple_triangle(GLFWwindow* window) {
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 1.0f
-	};	
+	};
+
+	// transposed to row
+	float matrix[] = {
+		1.0f, 0.0f, 0.0f, 0.0f, // first column
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.0f, 0.0f, 1.0f, // fourth column
+	};
 	/**/
 
 	int number_of_triangle_points = sizeof(triangle_points) / sizeof(triangle_points)[0];
@@ -219,7 +227,7 @@ int draw_simple_triangle(GLFWwindow* window) {
 	GLuint colors_vbo = 0;
 	glGenBuffers(1, &colors_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-	glBufferData(GL_ARRAY_BUFFER, number_of_colors_points * sizeof(GLfloat), triangle_colors, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, number_of_colors_points * sizeof(GLfloat), triangle_colors, GL_STATIC_DRAW);	
 	/**/
 
 	/**/
@@ -234,17 +242,25 @@ int draw_simple_triangle(GLFWwindow* window) {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(1);	
 	/**/
 
 	GLuint shader_program = compile_and_link_shader_program_from_files("shaders\\triangle_shader.vert", "shaders\\triangle_shader.frag");
 
+	int matrix_location = glGetUniformLocation(shader_program, "matrix");
+
 	if (shader_program > 0)
-	{
-		glUseProgram(shader_program);
-		glBindVertexArray(triangle_vao);
+	{				
+		glUseProgram(shader_program);		
+		glBindVertexArray(triangle_vao);		
+	}
+	else {
+		fprintf(stderr, "ERROR: could not compile shader_program.");
+		glfwTerminate();
+		return 0;
 	}
 
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
 
 	/* 0 swap immediate 1 sync to monitor */
 	glfwSwapInterval(1);
@@ -309,6 +325,8 @@ int draw_simple_triangle(GLFWwindow* window) {
 			else
 				degree_step = 0;
 			*/
+
+
 						
 			// wire-frame mode
 			// glPolygonMode(GL_FRONT, GL_LINE);
@@ -397,7 +415,19 @@ void create_cube_map(
 	glGenTextures(1, texture_cube);
 
 	// load each image
-	bool success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, front);	
+	bool success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, front);
+	success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, back);
+	success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, top);
+	success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, bottom);
+	success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_POSITIVE_X, left);
+	success = load_cube_map_side(*texture_cube, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, right);
+
+	// format cube map texture
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 int draw_cube_map(GLFWwindow* window) {
@@ -452,35 +482,54 @@ int draw_cube_map(GLFWwindow* window) {
 
 	int points_per_cube = points_per_triangle * triangles_per_face * faces_per_cube;
 
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, points_per_cube * sizeof(GLfloat), &cube_points, GL_STATIC_DRAW);
+	GLuint cube_points_vbo;
+	glGenBuffers(1, &cube_points_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_points_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_points), &cube_points, GL_STATIC_DRAW);
 
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	GLuint cube_vao;
+	glGenVertexArrays(1, &cube_vao);
+	glBindVertexArray(cube_vao);
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_points_vbo);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	GLuint dummy_texture_cube;
 
 	create_cube_map(
 		"Common\\assets\\Yokohama3\\posz.jpg",
-		"Common\\assets\\Yokohama3\\posz.jpg",
-		"Common\\assets\\Yokohama3\\posz.jpg",
-		"Common\\assets\\Yokohama3\\posz.jpg",
-		"Common\\assets\\Yokohama3\\posz.jpg",
-		"Common\\assets\\Yokohama3\\posz.jpg",
+		"Common\\assets\\Yokohama3\\negz.jpg",
+		"Common\\assets\\Yokohama3\\posy.jpg",
+		"Common\\assets\\Yokohama3\\negy.jpg",
+		"Common\\assets\\Yokohama3\\posx.jpg",
+		"Common\\assets\\Yokohama3\\negx.jpg",
 		&dummy_texture_cube
 	);
 
-	// DEBUG RETURN
-	return 0;
+	GLuint shader_program = compile_and_link_shader_program_from_files("shaders\\cube_shader.vert", "shaders\\cube_shader.frag");
+
+	if (shader_program > 0)
+	{
+		glUseProgram(shader_program);
+		glBindVertexArray(cube_vao);
+	}
+
+	glUseProgram(shader_program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, dummy_texture_cube);
+	glBindVertexArray(cube_vao);
+
+	
 
 	while (!glfwWindowShouldClose(window))
 	{
+		glDepthMask(GL_FALSE);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDepthMask(GL_TRUE);
+
+		/* Swap front and back buffers */
+		glfwSwapBuffers(window);
+
 		/* Poll for and process events */
 		glfwPollEvents();
 	}
@@ -496,6 +545,7 @@ int main(int arc, char** argvv) {
 
 	GLFWwindow* window;
 
+	// TODO turn this into a function?
 	window = init_gl();
 
 	if (!window)
@@ -505,8 +555,6 @@ int main(int arc, char** argvv) {
 	}
 
 	draw_simple_triangle(window);
-
-	draw_cube_map(window);
 
 	if (false) {
 		execute_kernel();
@@ -519,7 +567,7 @@ int main(int arc, char** argvv) {
 			return -1;
 		}
 
-		draw_simple_triangle(window);
+		draw_cube_map(window);
 	}
 
 	return 0;
