@@ -23,10 +23,15 @@
 
 // Utils
 #include "stb_image.h"
+#include "cuda_gl_hello_world_utils.h"
+
+// using Anton's OpenGL maths library
+#include "maths_funcs.h"
 
 // CUDA externs
 extern "C" int execute_kernel();
 
+// pre-processor declarations
 GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_filename, const char* fragment_shader_filename);
 
 /* Create a shader https://antongerdelan.net/opengl/compute.html */
@@ -199,12 +204,28 @@ int draw_simple_triangle(GLFWwindow* window) {
 		0.0f, 0.0f, 1.0f
 	};
 
-	// transposed to row
-	float matrix[] = {
-		1.0f, 0.0f, 0.0f, 0.0f, // first column
+	// column order looks like row because OpenGL will read as a 1d array with column 1 occupying [0..3] and so on.
+	// If the 1d array represents data in row order, you must call glUniform with transposition set to GL_TRUE.
+	/*
+	* a b c d
+	* e f g h
+	* i j k l
+	* m n o p
+	*/
+	float translation_matrix[] = {
+		1.0f, 0.0f, 0.0f, 0.0f, // first column - a e i m
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.0f, 0.0f, 1.0f, // fourth column
+		0.5f, 0.0f, 0.0f, 1.0f, // fourth column - d h l p
+	};
+
+	// translate_matrix(translation_matrix, 0.5, 0.0, 0.0);
+
+	float rotation_matrix[] = {
+		1.0f, 0.0f, 0.0f, 0.0f, // first column - a e i m
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f, // fourth column - d h l p
 	};
 	/**/
 
@@ -247,7 +268,8 @@ int draw_simple_triangle(GLFWwindow* window) {
 
 	GLuint shader_program = compile_and_link_shader_program_from_files("shaders\\triangle_shader.vert", "shaders\\triangle_shader.frag");
 
-	int matrix_location = glGetUniformLocation(shader_program, "matrix");
+	int translation_matrix_location = glGetUniformLocation(shader_program, "translation_matrix");
+	int rotation_matrix_location = glGetUniformLocation(shader_program, "rotation_matrix");
 
 	if (shader_program > 0)
 	{				
@@ -260,7 +282,8 @@ int draw_simple_triangle(GLFWwindow* window) {
 		return 0;
 	}
 
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
+	glUniformMatrix4fv(translation_matrix_location, 1, GL_FALSE, translation_matrix);
+	glUniformMatrix4fv(rotation_matrix_location, 1, GL_FALSE, rotation_matrix);
 
 	/* 0 swap immediate 1 sync to monitor */
 	glfwSwapInterval(1);
@@ -271,8 +294,8 @@ int draw_simple_triangle(GLFWwindow* window) {
 	double last_update_time = 0;
 	double last_frame_time = 0;
 
-	glEnable(GL_CULL_FACE); // cull face
-	glCullFace(GL_BACK);    // cull back face
+	// glEnable(GL_CULL_FACE); // cull face
+	// glCullFace(GL_BACK);    // cull back face
 	glFrontFace(GL_CW);     // GL_CCW for counter clock-wise
 
 	while (!glfwWindowShouldClose(window))
@@ -293,8 +316,9 @@ int draw_simple_triangle(GLFWwindow* window) {
 			glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+			double current_time = glfwGetTime();
 			/* Animation */
-			/*
+			/**/
 			float amplitude = 1.0;
 			float frequency = 1.0;
 			float rad_step = float(2 * M_PI / 180.0f) * degree_step;
@@ -304,29 +328,51 @@ int draw_simple_triangle(GLFWwindow* window) {
 
 			float phase = 90.0;
 			float phase_rad = float(2 * M_PI / 180.0f) * phase;
-			float sin_wave = amplitude * sin(rad_step * frequency);
-			float sin_wave_out_of_phase = amplitude * sin(rad_step * frequency + phase);
 
-			double curr_s = glfwGetTime();
-			int time_uniform_location = glGetUniformLocation(shader_program, "time");
-			if (time_uniform_location == -1) {
-				printf("Failed to initialize time uniform");
-				break;
-			}
-			glUniform1f(time_uniform_location, (float)curr_s);
+			float theta = rad_step * frequency;
+			float theta_phase = rad_step * frequency + phase_rad;
 
-			// glBufferData(GL_ARRAY_BUFFER, number_of_triangle_points * sizeof(float), triangle_points, GL_STATIC_DRAW);
-
+			float sin_wave = amplitude * sin(theta);
+			float sin_wave_out_of_phase = amplitude * sin(theta_phase);
+			
 			int cycle_limit = int(fps_limit_frequency / frequency);
 
 			if (degree_step < degree_step_limit) {
 				degree_step++;
 			}
 			else
-				degree_step = 0;
-			*/
+				degree_step = 0;			
 
+			// update translation matrix
+			translation_matrix[12] = sin_wave;
+			// translate_matrix(translation_matrix, sin_wave, sin_wave, 0.0);
+			
+			// update rotation matrix on z axis - roll?
+			/**/
+			rotation_matrix[0] = cos(theta_phase);
+			rotation_matrix[1] = sin(theta_phase);
+			rotation_matrix[4] = -sin(theta_phase);
+			rotation_matrix[5] = cos(theta_phase);
+			/**/
 
+			// update rotation matrix on x axis - pitch?
+			/**/
+			rotation_matrix[5] = cos(theta);
+			rotation_matrix[6] = sin(theta);
+			rotation_matrix[9] = -sin(theta);
+			rotation_matrix[10] = cos(theta);
+			/**/
+
+			// update rotation matrix on y axis - yaw?
+			/**/
+			rotation_matrix[0] = cos(theta_phase);
+			rotation_matrix[2] = -sin(theta_phase);
+			rotation_matrix[8] = sin(theta_phase);			
+			rotation_matrix[10] = cos(theta_phase);
+			/**/
+
+			glUniformMatrix4fv(translation_matrix_location, 1, GL_FALSE, translation_matrix);
+			// glUniformMatrix4fv(rotation_matrix_location, 1, GL_FALSE, rotation_matrix);
 						
 			// wire-frame mode
 			// glPolygonMode(GL_FRONT, GL_LINE);

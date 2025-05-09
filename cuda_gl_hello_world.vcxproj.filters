@@ -7,6 +7,9 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{b0e15d40-d6c8-4c96-aed1-c38e110dabde}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{65852f58-26be-4d27-90bf-9e4a757093dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\triangle_shader.frag">
@@ -26,5 +29,13 @@
     <ClCompile Include="cuda_gl_hello_world.cpp" />
     <ClCompile Include="gl.c" />
     <ClCompile Include="cuda_gl_utils.cpp" />
+    <ClCompile Include="Common\utils\maths_funcs.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cuda_gl_hello_world_math.h" />
+    <ClInclude Include="cuda_gl_hello_world_utils.cpp" />
+    <ClInclude Include="cuda_gl_hello_world_utils.h" />
   </ItemGroup>
 </Project>

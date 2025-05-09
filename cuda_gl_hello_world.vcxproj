@@ -84,6 +84,7 @@
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Common\utils\maths_funcs.cpp" />
     <ClCompile Include="cuda_gl_hello_world.cpp" />
     <ClCompile Include="cuda_gl_utils.cpp" />
     <ClCompile Include="gl.c" />
@@ -93,6 +94,11 @@
     <None Include="shaders\cube_shader.vert" />
     <None Include="shaders\triangle_shader.frag" />
     <None Include="shaders\triangle_shader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cuda_gl_hello_world_utils.cpp" />
+    <ClInclude Include="cuda_gl_hello_world_math.h" />
+    <ClInclude Include="cuda_gl_hello_world_utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
