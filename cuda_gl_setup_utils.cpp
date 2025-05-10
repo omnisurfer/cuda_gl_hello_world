@@ -1,12 +1,59 @@
-#pragma once
+#include "cuda_gl_setup_utils.h"
 
-#include "cuda_gl_hello_world_utils.h"
+GLFWwindow* init_gl() {
 
-static void error_callback_glfw(int error, const char* description) {
-	fprintf(stderr, "GLFW ERROR: code %i msg: %s\n", error, description);
+	printf("GLFW %s\n", glfwGetVersionString());
+
+	glfwSetErrorCallback(error_callback_glfw);
+
+	GLFWwindow* window;
+
+	if (!glfwInit()) {
+
+		fprintf(stderr, "ERROR: could not start GLFW3.\n");
+		return 0;
+	}
+
+	/* min version */
+	/*
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	*/
+
+	/* MSAA */
+	glfwWindowHint(GLFW_SAMPLES, 8);
+
+	/* Create a windowed mode window and context */
+	window = glfwCreateWindow(640, 480, "CUDA GL Hello World", NULL, NULL);
+
+	if (!window)
+	{
+		glfwTerminate();
+		return 0;
+	}
+
+	glfwMakeContextCurrent(window);
+
+	/* Start glad for OpenGL functions */
+	int version_glad = gladLoadGL(glfwGetProcAddress);
+
+	if (version_glad == 0) {
+		fprintf(stderr, "ERROR: Failed to initialize OpenGL context.\n");
+		return 0;
+	}
+
+	printf("%s\n", glGetString(GL_VERSION));
+	printf("%s\n", glGetString(GL_RENDERER));
+
+	// Create callback for key presses
+	glfwSetKeyCallback(window, gl_key_callback);
+
+	return window;
 }
 
-static void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -20,6 +67,10 @@ static void gl_key_callback(GLFWwindow* window, int key, int scancode, int actio
 			glUseProgram(shader_program);
 		}
 	}
+}
+
+void error_callback_glfw(int error, const char* description) {
+	fprintf(stderr, "GLFW ERROR: code %i msg: %s\n", error, description);
 }
 
 GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_filename, const char* fragment_shader_filename) {

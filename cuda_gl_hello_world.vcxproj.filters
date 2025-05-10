@@ -10,6 +10,9 @@
     <Filter Include="utils">
       <UniqueIdentifier>{65852f58-26be-4d27-90bf-9e4a757093dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{4da43dc6-00e4-4d2b-8fe9-2dfa88f9d1c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\triangle_shader.frag">
@@ -24,18 +27,37 @@
     <None Include="shaders\cube_shader.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\q_camera_shader.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\q_camera_shader.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cuda_gl_hello_world.cpp" />
     <ClCompile Include="gl.c" />
-    <ClCompile Include="cuda_gl_utils.cpp" />
     <ClCompile Include="Common\utils\maths_funcs.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="cuda_gl_scene_utils.cpp" />
+    <ClCompile Include="cuda_gl_setup_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cuda_gl_hello_world_math.h" />
-    <ClInclude Include="cuda_gl_hello_world_utils.cpp" />
-    <ClInclude Include="cuda_gl_hello_world_utils.h" />
+    <ClInclude Include="include\cuda_gl_setup_utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="simple_triangle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="cube_map.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\q_camera_triangle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cuda_gl_scene_utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
