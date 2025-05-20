@@ -22,7 +22,10 @@
 
 // Utils
 #include "stb_image.h"
-#include "maths_funcs.h" // using Anton's OpenGL maths library
+
+// Anton's OpenGL Tutorial Includes
+#include "maths_funcs.h" 
+#include "obj_parser.h"
 
 #include "cuda_gl_setup_utils.h"
 #include "cuda_gl_scene_utils.h"
@@ -45,7 +48,7 @@ int main(int arc, char** argvv) {
 	GLFWwindow* window;
 
 	// TODO turn this into a function?
-	window = init_gl();
+	window = init_gl(1024, 1024);
 
 	if (!window)
 	{
@@ -53,14 +56,12 @@ int main(int arc, char** argvv) {
 		return -1;
 	}
 
-	// draw_simple_triangle(window);
-
 	draw_q_camera_triangle(window);
 
 	if (false) {
 		execute_kernel();
 
-		window = init_gl();
+		window = init_gl(1024, 1024);
 
 		if (!window)
 		{
@@ -68,7 +69,8 @@ int main(int arc, char** argvv) {
 			return -1;
 		}
 
-		draw_cube_map(window);
+		// draw_cube_map(window);
+		draw_simple_triangle(window);
 	}
 
 	return 0;

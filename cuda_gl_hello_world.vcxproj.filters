@@ -13,6 +13,9 @@
     <Filter Include="include">
       <UniqueIdentifier>{4da43dc6-00e4-4d2b-8fe9-2dfa88f9d1c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="3d_objects">
+      <UniqueIdentifier>{e8b1ead2-4087-46dc-8301-6b63399993ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\triangle_shader.frag">
@@ -42,6 +45,9 @@
     </ClCompile>
     <ClCompile Include="cuda_gl_scene_utils.cpp" />
     <ClCompile Include="cuda_gl_setup_utils.cpp" />
+    <ClCompile Include="Common\utils\obj_parser.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\cuda_gl_setup_utils.h">
@@ -57,6 +63,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cuda_gl_scene_utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_parser.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

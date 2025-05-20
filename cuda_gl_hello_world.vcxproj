@@ -85,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\utils\maths_funcs.cpp" />
+    <ClCompile Include="Common\utils\obj_parser.cpp" />
     <ClCompile Include="cuda_gl_hello_world.cpp" />
     <ClCompile Include="cuda_gl_scene_utils.cpp" />
     <ClCompile Include="cuda_gl_setup_utils.cpp" />
@@ -103,6 +104,7 @@
     <ClInclude Include="include\cuda_gl_scene_utils.h" />
     <ClInclude Include="include\cuda_gl_setup_utils.h" />
     <ClInclude Include="include\q_camera_triangle.h" />
+    <ClInclude Include="obj_parser.h" />
     <ClInclude Include="simple_triangle.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

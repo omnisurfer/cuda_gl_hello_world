@@ -2,10 +2,15 @@
 
 #include "maths_funcs.h"
 
-#define ONE_DEG_IN_RAD (2.0 * M_PI) / 360.0f;
+void configure_camera(
+	float near_clipping_plane,
+	float far_clipping_plane,
+	float field_of_view_degrees,
+	float viewport_heigth,
+	float viewport_width,
+	mat4* projection_matrix
+);
 
-mat4 create_camera(int viewport_width, int viewport_height);
+mat4 move_camera(vec3 move);
 
-vec4 forwardd(0.0, 0.0, -1.0f, 0.0f);
-vec4 right(1.0, 0.0, 0.0f, 0.0f);
-vec4 up(0.0, 1.0, 0.0f, 0.0f);
+mat4 update_camera(vec3 cam_position, float cam_heading);

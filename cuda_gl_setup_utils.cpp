@@ -1,6 +1,6 @@
 #include "cuda_gl_setup_utils.h"
 
-GLFWwindow* init_gl() {
+GLFWwindow* init_gl(int window_height, int window_width) {
 
 	printf("GLFW %s\n", glfwGetVersionString());
 
@@ -26,7 +26,7 @@ GLFWwindow* init_gl() {
 	glfwWindowHint(GLFW_SAMPLES, 8);
 
 	/* Create a windowed mode window and context */
-	window = glfwCreateWindow(640, 480, "CUDA GL Hello World", NULL, NULL);
+	window = glfwCreateWindow(1024, 1024, "CUDA GL Hello World", NULL, NULL);
 
 	if (!window)
 	{
