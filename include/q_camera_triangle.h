@@ -91,7 +91,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 	glEnable(GL_LESS);			// depth-testing interprets a smaller value as "closer"
 	glEnable(GL_CULL_FACE);		// cull face
 	glCullFace(GL_BACK);		// cull back face
-	glFrontFace(GL_CW);			// GL_CCW for counter clock-wise
+	glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
 
 	// wire-frame mode
 	// glPolygonMode(GL_FRONT, GL_LINE);
@@ -114,13 +114,26 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		double delta_time = now - last_update_time;
 
 		if ((now - last_frame_time) >= fps_limit_period)
-		{
-			/* Check if window was resized */			
+		{									
+			glfwGetWindowSize(window, &window_width, &window_height);
+
+			// TODO need to create a method that does not change the Rotation matrix...
+			if (false) {
+				configure_camera(
+					0.1f,
+					100.0f,
+					67.0f,
+					window_width,
+					window_height,
+					&projection_matrix
+				);
+			}
+
+			/* Check if window was resized */
 			/* Clear the drawing sruface */
 			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 			glViewport(0, 0, window_width, window_height);
 
-			glfwGetWindowSize(window, &window_width, &window_height);					
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			double current_time = glfwGetTime();			
@@ -140,9 +153,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 			sprintf_s(temp, "FPS %.2lf", fps);
 			glfwSetWindowTitle(window, temp);
 
-			last_frame_time = now;
-
-			
+			last_frame_time = now;			
 		}
 
 		/* Update camera outside FPS loop */

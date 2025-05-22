@@ -35,6 +35,9 @@
 #include "q_camera_triangle.h"
 #include "cube_map.h"
 
+#define DISPLAY_HEIGHT 1080
+#define DISPLAY_WIDTH 1920
+
 // CUDA externs
 extern "C" int execute_kernel();
 
@@ -48,7 +51,7 @@ int main(int arc, char** argvv) {
 	GLFWwindow* window;
 
 	// TODO turn this into a function?
-	window = init_gl(1024, 1024);
+	window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 	if (!window)
 	{

@@ -69,4 +69,9 @@
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="3d_objects\sphere.obj">
+      <Filter>3d_objects</Filter>
+    </Object>
+  </ItemGroup>
 </Project>

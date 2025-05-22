@@ -9,7 +9,7 @@
 #include <fstream>
 #include <vector>
 
-GLFWwindow* init_gl(int window_height, int window_width);
+GLFWwindow* init_gl(int window_width, int window_height);
 
 void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 

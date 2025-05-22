@@ -107,6 +107,12 @@
     <ClInclude Include="obj_parser.h" />
     <ClInclude Include="simple_triangle.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="3d_objects\sphere.obj">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.targets" />

@@ -100,8 +100,8 @@ void configure_camera(
 	float near_clipping_plane, 
 	float far_clipping_plane, 
 	float field_of_view_degrees,
-	int viewport_height,
 	int viewport_width,
+	int viewport_height,	
 	mat4 *projection_matrix
 ) {
 	near = near_clipping_plane;
@@ -117,10 +117,29 @@ void configure_camera(
 
 	*proj_matrix = perspective(fovy, aspect, near, far);
 
+	// ultrawide screen adjust. Not done in perspective call so as to not modify the third party code.
+	float ultrawide_adjust = 1.0f;
+
+	// TODO account for the windows title bar in calculations...
+	if (width > height) {
+		ultrawide_adjust = float(width - height) / float(height);
+	}
+	else if (height > width) {
+		ultrawide_adjust = float(height - width) / float(width);
+	}
+	
+	printf("ultrawide adjust %f\n", ultrawide_adjust);
+	proj_matrix->m[0] = proj_matrix->m[0] * ultrawide_adjust;
+
+	printf("projec matrix\n");
+	printf("%f %f %f %f\n", proj_matrix->m[0], proj_matrix->m[1], proj_matrix->m[2], proj_matrix->m[3]);
+	printf("%f %f %f %f\n", proj_matrix->m[4], proj_matrix->m[5], proj_matrix->m[6], proj_matrix->m[7]);
+	printf("%f %f %f %f\n", proj_matrix->m[8], proj_matrix->m[9], proj_matrix->m[10], proj_matrix->m[11]);
+	printf("%f %f %f %f\n", proj_matrix->m[12], proj_matrix->m[13], proj_matrix->m[14], proj_matrix->m[15]);
+
 	create_versor(quaternion, -camera_heading, 0.0f, 1.0f, 0.0f);
 	quat_to_mat4(R.m, quaternion);	
 }
-
 
 mat4 move_camera(vec3 move, vec3 rotate) {
 	

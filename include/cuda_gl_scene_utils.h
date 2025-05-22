@@ -6,8 +6,8 @@ void configure_camera(
 	float near_clipping_plane,
 	float far_clipping_plane,
 	float field_of_view_degrees,
-	int viewport_heigth,
 	int viewport_width,
+	int viewport_heigth,	
 	mat4* projection_matrix
 );
 
