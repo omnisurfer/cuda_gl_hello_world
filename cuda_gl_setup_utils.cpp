@@ -88,7 +88,7 @@ GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_file
 	buffer.clear();
 
 	const char* vertex_shader = vertex_shader_string.c_str();
-	printf("Vertex shader:\n%s", vertex_shader_string.c_str());
+	printf("Vertex shader:\n%s\n", vertex_shader_string.c_str());
 
 	input.open(fragment_shader_filename, std::ios::binary);
 	buffer.assign(std::istreambuf_iterator<char>(input), {});
@@ -98,7 +98,7 @@ GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_file
 	input.close();
 	buffer.clear();
 
-	printf("Fragment shader:\n%s", fragment_shader_string.c_str());
+	printf("Fragment shader:\n%s\n", fragment_shader_string.c_str());
 	const char* fragment_shader = fragment_shader_string.c_str();
 
 	// shaders	

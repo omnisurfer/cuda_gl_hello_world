@@ -41,7 +41,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		&projection_matrix
 	);
 
-	view_matrix = update_camera(camera_position, camera_heading);
+	view_matrix = place_camera(camera_position, camera_heading);
 
 	/* create geometry */
 	GLfloat* vertex_points = NULL;
@@ -74,7 +74,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		fprintf(stderr, "ERROR: could not compile shader_program.");
 		glfwTerminate();
 		return 0;
-	}
+	}	
 
 	glUseProgram(shader_program);
 	glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
@@ -142,32 +142,84 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 
 			last_frame_time = now;
 
-			bool camera_moved = false;
-			vec3 move(0.0, 0.0, 0.0);
-			float camera_yaw = 0.0;
-			float camera_roll = 0.0;
-			float camera_pitch = 0.0;
+			
+		}
 
-			float camera_speed = 5.0f; // 1 unit per second?
-			float camera_heading_speed = 100.0f; //30 degrees per second
-			float camera_heading = 0.0f; // y-rotation in degrees
+		/* Update camera outside FPS loop */
 
-			if (glfwGetKey(window, GLFW_KEY_W)) {
-				move.v[0] -= camera_speed * delta_time * 10000.0f;
-				camera_moved = true;
-				fprintf(stderr, "camera move %f\n", move.v[0]);
-			}
-			if (glfwGetKey(window, GLFW_KEY_S)) {
-				move.v[0] += camera_speed * delta_time;
-				camera_moved = true;
-				fprintf(stderr, "camera move %f\n", move.v[0]);
-			}			
+		bool camera_moved = false;
+		// x y z
+		vec3 move(0.0f, 0.0f, 0.0f);
 
-			if (camera_moved) {
+		// r p y
+		vec3 rotate(0.0f, 0.0f, 0.0f);
+						
+		float camera_speed = 5.0f; // 1 unit per second?
+		float camera_heading_speed = 100.0f; //30 degrees per second
+		float camera_heading = 0.0f; // y-rotation in degrees
 
-				view_matrix = move_camera(move);
-				glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
-			}
+		// Displacement
+		if (glfwGetKey(window, GLFW_KEY_W)) {
+			move.v[2] -= (camera_speed * delta_time);
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_A)) {
+			move.v[0] -= (camera_speed * delta_time);
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_S)) {
+			move.v[2] += (camera_speed * delta_time);
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_D)) {
+			move.v[0] += (camera_speed * delta_time);
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_Q)) {
+			move.v[1] += (camera_speed * delta_time);
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_E)) {
+			move.v[1] -= (camera_speed * delta_time);
+			camera_moved = true;
+		}
+		// Rotation
+		// Roll
+		if (glfwGetKey(window, GLFW_KEY_Z)) {
+			rotate.v[0] += camera_heading_speed * delta_time;			
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_X)) {
+			rotate.v[0] -= camera_heading_speed * delta_time;
+			camera_moved = true;
+		}
+
+		// Pitch
+		if (glfwGetKey(window, GLFW_KEY_UP)) {
+			rotate.v[1] += camera_heading_speed * delta_time;
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_DOWN)) {
+			rotate.v[1] -= camera_heading_speed * delta_time;
+			camera_moved = true;
+		}
+		
+		// Yaw
+		if (glfwGetKey(window, GLFW_KEY_LEFT)) {			
+			rotate.v[2] += camera_heading_speed * delta_time;
+			// printf("cam_yaw %f speed %f delta %f\n",rotate.v[2], camera_heading_speed, delta_time);
+			camera_moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+			rotate.v[2] -= camera_heading_speed * delta_time;
+			camera_moved = true;
+		}
+
+		if (camera_moved) {
+
+			view_matrix = move_camera(move, rotate);
+			glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
+
 		}
 
 		last_update_time = now;
