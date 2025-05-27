@@ -6,11 +6,14 @@
 int width = 1024;
 int height = 768;
 
+int current_height = 0;
+int current_width = 0;
+
 float near = 0.1f;	// clipping plane
 float far = 100.0f; // clipping plane
 float fovy = 67.0f; // field of view, degrees
 
-float cmaera_speed = 5.0f; // 1 unit per second?
+float camera_speed = 5.0f; // 1 unit per second?
 float camera_heading_speed = 100.0f; //30 degrees per second
 float camera_heading = 0.0f; // y-rotation in degrees
 
@@ -96,7 +99,12 @@ OpenGL 4 Example Code.
 Accompanies written series "Anton's OpenGL 4 Tutorials"
 */
 
-void configure_camera(
+void init_camera() {
+	create_versor(quaternion, -camera_heading, 0.0f, 1.0f, 0.0f);
+	quat_to_mat4(R.m, quaternion);
+}
+
+bool configure_camera(
 	float near_clipping_plane, 
 	float far_clipping_plane, 
 	float field_of_view_degrees,
@@ -104,6 +112,17 @@ void configure_camera(
 	int viewport_height,	
 	mat4 *projection_matrix
 ) {
+
+	if (viewport_width == current_width && viewport_height == current_height) {
+		return false;
+	}
+	else {
+		current_width = viewport_width;
+		current_height = viewport_height;
+
+		printf("window width %i height %i\n", current_width, current_height);
+	}
+
 	near = near_clipping_plane;
 	far = far_clipping_plane;
 	fovy = field_of_view_degrees;
@@ -115,30 +134,9 @@ void configure_camera(
 
 	float aspect = float((float)width / (float)height); // aspect ratio
 
-	*proj_matrix = perspective(fovy, aspect, near, far);
+	*proj_matrix = perspective(fovy, aspect, near, far);	
 
-	// ultrawide screen adjust. Not done in perspective call so as to not modify the third party code.
-	float ultrawide_adjust = 1.0f;
-
-	// TODO account for the windows title bar in calculations...
-	if (width > height) {
-		ultrawide_adjust = float(width - height) / float(height);
-	}
-	else if (height > width) {
-		ultrawide_adjust = float(height - width) / float(width);
-	}
-	
-	printf("ultrawide adjust %f\n", ultrawide_adjust);
-	proj_matrix->m[0] = proj_matrix->m[0] * ultrawide_adjust;
-
-	printf("projec matrix\n");
-	printf("%f %f %f %f\n", proj_matrix->m[0], proj_matrix->m[1], proj_matrix->m[2], proj_matrix->m[3]);
-	printf("%f %f %f %f\n", proj_matrix->m[4], proj_matrix->m[5], proj_matrix->m[6], proj_matrix->m[7]);
-	printf("%f %f %f %f\n", proj_matrix->m[8], proj_matrix->m[9], proj_matrix->m[10], proj_matrix->m[11]);
-	printf("%f %f %f %f\n", proj_matrix->m[12], proj_matrix->m[13], proj_matrix->m[14], proj_matrix->m[15]);
-
-	create_versor(quaternion, -camera_heading, 0.0f, 1.0f, 0.0f);
-	quat_to_mat4(R.m, quaternion);	
+	return true;
 }
 
 mat4 move_camera(vec3 move, vec3 rotate) {

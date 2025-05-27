@@ -45,10 +45,10 @@ extern "C" int execute_kernel();
 // TBD
 
 int main(int arc, char** argvv) {
+	GLFWwindow* window;
 
 	printf("Starting cuda_gl_hello_world\n");
 
-	GLFWwindow* window;
 
 	// TODO turn this into a function?
 	window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);

@@ -14,14 +14,38 @@
 #define MESH_FILE "3d_objects/sphere.obj"
 #define NUM_OF_SPHERS 4
 
+scene_key_callback_ptr scene_key_callback_function_ptr = nullptr;
+
+vec3 move;
+vec3 rotate;
+
+void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int action, int mods) {
+
+	printf("HELLO FROM scene_key_callback_function %i %i %i %i\n", key, scancode, action, mods);
+
+	if (glfwGetKey(window, GLFW_KEY_W)) {
+		printf("GOT W KEY\n");
+	}
+}
+
 /* Derived from 06_vcam_with_quaternion */
 int draw_q_camera_triangle(GLFWwindow* window) {
+
+	float camera_speed = 5.0f; // 1 unit per second?
+	float camera_heading_speed = 100.0f; //30 degrees per second
+	float camera_heading = 0.0f; // y-rotation in degrees
+
+	scene_key_callback_function_ptr = scene_key_callback_function;
+
+	if (scene_key_callback_function_ptr != nullptr) {
+		set_scene_key_callback_function(scene_key_callback_function_ptr);
+	}
 
 	/* create camera */
 	mat4 view_matrix;
 	mat4 projection_matrix;
 	vec3 camera_position(0.0f, 0.0f, 5.0f);
-	float camera_heading = 0.0f;
+	// float camera_heading = 0.0f;
 	vec3 sphere_positions_world[] = {
 		vec3(-2.0, 0.0, 0.0),
 		vec3(2.0, 0.0, 0.0),
@@ -41,6 +65,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		&projection_matrix
 	);
 
+	init_camera();
 	view_matrix = place_camera(camera_position, camera_heading);
 
 	/* create geometry */
@@ -108,6 +133,12 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 
 	while (!glfwWindowShouldClose(window))
 	{
+		bool camera_moved = false;
+		// x y z
+		move = vec3(0.0f, 0.0f, 0.0f);
+
+		// r p y
+		rotate = vec3(0.0f, 0.0f, 0.0f);
 
 		// Code to limit framerate
 		double now = glfwGetTime();
@@ -116,9 +147,8 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		if ((now - last_frame_time) >= fps_limit_period)
 		{									
 			glfwGetWindowSize(window, &window_width, &window_height);
-
-			// TODO need to create a method that does not change the Rotation matrix...
-			if (false) {
+			
+			if (true) {
 				configure_camera(
 					0.1f,
 					100.0f,
@@ -127,13 +157,11 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 					window_height,
 					&projection_matrix
 				);
-			}
-
+			}			
 			/* Check if window was resized */
 			/* Clear the drawing sruface */
-			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-			glViewport(0, 0, window_width, window_height);
-
+			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);		
+			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			double current_time = glfwGetTime();			
@@ -157,18 +185,6 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		}
 
 		/* Update camera outside FPS loop */
-
-		bool camera_moved = false;
-		// x y z
-		vec3 move(0.0f, 0.0f, 0.0f);
-
-		// r p y
-		vec3 rotate(0.0f, 0.0f, 0.0f);
-						
-		float camera_speed = 5.0f; // 1 unit per second?
-		float camera_heading_speed = 100.0f; //30 degrees per second
-		float camera_heading = 0.0f; // y-rotation in degrees
-
 		// Displacement
 		if (glfwGetKey(window, GLFW_KEY_W)) {
 			move.v[2] -= (camera_speed * delta_time);

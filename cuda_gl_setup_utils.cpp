@@ -1,5 +1,7 @@
 #include "cuda_gl_setup_utils.h"
 
+scene_key_callback_ptr scene_key_callback_function = nullptr;
+
 GLFWwindow* init_gl(int window_width, int window_height) {
 
 	printf("GLFW %s\n", glfwGetVersionString());
@@ -50,7 +52,22 @@ GLFWwindow* init_gl(int window_width, int window_height) {
 	// Create callback for key presses
 	glfwSetKeyCallback(window, gl_key_callback);
 
+	glfwSetWindowAspectRatio(window, window_width, window_height);
+
+	// center the window
+	GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* vid_mode = glfwGetVideoMode(primary_monitor);
+	
+	glfwSetWindowPos(window, (vid_mode->width - window_width) / 2, (vid_mode->height - window_height) / 2);
+
 	return window;
+}
+
+void set_scene_key_callback_function(scene_key_callback_ptr scene_key_callback) {
+
+	if (scene_key_callback != nullptr) {
+		scene_key_callback_function = scene_key_callback;
+	}
 }
 
 void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -66,6 +83,10 @@ void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int 
 		{
 			glUseProgram(shader_program);
 		}
+	}
+
+	if (scene_key_callback_function != nullptr) {
+		scene_key_callback_function(window, key, scancode, action, mods);
 	}
 }
 
@@ -88,7 +109,7 @@ GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_file
 	buffer.clear();
 
 	const char* vertex_shader = vertex_shader_string.c_str();
-	printf("Vertex shader:\n%s\n", vertex_shader_string.c_str());
+	// printf("Vertex shader:\n%s\n", vertex_shader_string.c_str());
 
 	input.open(fragment_shader_filename, std::ios::binary);
 	buffer.assign(std::istreambuf_iterator<char>(input), {});
@@ -98,7 +119,7 @@ GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_file
 	input.close();
 	buffer.clear();
 
-	printf("Fragment shader:\n%s\n", fragment_shader_string.c_str());
+	// printf("Fragment shader:\n%s\n", fragment_shader_string.c_str());
 	const char* fragment_shader = fragment_shader_string.c_str();
 
 	// shaders	

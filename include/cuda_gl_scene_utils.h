@@ -2,7 +2,16 @@
 
 #include "maths_funcs.h"
 
-void configure_camera(
+bool camera_moved_;
+// x y z
+vec3 move_;
+
+// r p y
+vec3 rotate_;
+
+void init_camera();
+
+bool configure_camera(
 	float near_clipping_plane,
 	float far_clipping_plane,
 	float field_of_view_degrees,
