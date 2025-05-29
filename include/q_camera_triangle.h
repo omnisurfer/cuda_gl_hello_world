@@ -16,15 +16,105 @@
 
 scene_key_callback_ptr scene_key_callback_function_ptr = nullptr;
 
-vec3 move;
-vec3 rotate;
+double delta_time = 0.0f;
+
+// TODO turn into bitfield?
+bool move_forward = false;
+bool move_backward = false;
+
+bool move_left = false;
+bool move_right = false;
+
+bool move_up = false;
+bool move_down = false;
+
+bool roll_right = false;
+bool roll_left = false;
+
+bool pitch_up = false;
+bool pitch_down = false;
+
+bool yaw_right = false;
+bool yaw_left = false;
 
 void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
-	printf("HELLO FROM scene_key_callback_function %i %i %i %i\n", key, scancode, action, mods);
+	// printf("HELLO FROM scene_key_callback_function %i %i %i %i\n", key, scancode, action, mods);
 
-	if (glfwGetKey(window, GLFW_KEY_W)) {
-		printf("GOT W KEY\n");
+	// forward, back, left, right, up, down
+	if (glfwGetKey(window, GLFW_KEY_W)) {		
+		move_forward = true;
+	}
+	else {
+		move_forward = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A)) {
+		move_left = true;		
+	}
+	else {
+		move_left = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S)) {
+		move_backward = true;
+	}
+	else {
+		move_backward = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D)) {
+		move_right = true;
+	}
+	else {
+		move_right = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q)) {
+		move_up = true;
+	}
+	else {
+		move_up = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_E)) {
+		move_down = true;
+	}
+	else {
+		move_down = false;
+	}
+
+	// roll, pitch, yaw
+	if (glfwGetKey(window, GLFW_KEY_Z)) {
+		roll_left = true;
+	}
+	else {
+		roll_left = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_X)) {
+		roll_right = true;
+	}
+	else {
+		roll_right = false;
+	}	
+	if (glfwGetKey(window, GLFW_KEY_UP)) {
+		pitch_up = true;
+	}
+	else {
+		pitch_up = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN)) {
+		pitch_down = true;
+	}	
+	else {
+		pitch_down = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+		yaw_left = true;
+	}
+	else {
+		yaw_left = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+		yaw_right = true;
+	}
+	else {
+		yaw_right = false;
 	}
 }
 
@@ -134,15 +224,11 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 	while (!glfwWindowShouldClose(window))
 	{
 		bool camera_moved = false;
-		// x y z
-		move = vec3(0.0f, 0.0f, 0.0f);
-
-		// r p y
-		rotate = vec3(0.0f, 0.0f, 0.0f);
-
+		
 		// Code to limit framerate
 		double now = glfwGetTime();
-		double delta_time = now - last_update_time;
+		// double delta_time = now - last_update_time;
+		delta_time = now - last_update_time;
 
 		if ((now - last_frame_time) >= fps_limit_period)
 		{									
@@ -178,75 +264,71 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 			/* calucate fps */
 			double fps = 1 / (now - last_frame_time);
 			char temp[256];
-			sprintf_s(temp, "FPS %.2lf", fps);
+			sprintf_s(temp, "FPS %.2lf, delta %f", fps, delta_time);
 			glfwSetWindowTitle(window, temp);
 
 			last_frame_time = now;			
 		}
 
 		/* Update camera outside FPS loop */
-		// Displacement
-		if (glfwGetKey(window, GLFW_KEY_W)) {
-			move.v[2] -= (camera_speed * delta_time);
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_A)) {
-			move.v[0] -= (camera_speed * delta_time);
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_S)) {
-			move.v[2] += (camera_speed * delta_time);
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_D)) {
-			move.v[0] += (camera_speed * delta_time);
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_Q)) {
-			move.v[1] += (camera_speed * delta_time);
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_E)) {
-			move.v[1] -= (camera_speed * delta_time);
-			camera_moved = true;
-		}
-		// Rotation
-		// Roll
-		if (glfwGetKey(window, GLFW_KEY_Z)) {
-			rotate.v[0] += camera_heading_speed * delta_time;			
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_X)) {
-			rotate.v[0] -= camera_heading_speed * delta_time;
-			camera_moved = true;
-		}
-
-		// Pitch
-		if (glfwGetKey(window, GLFW_KEY_UP)) {
-			rotate.v[1] += camera_heading_speed * delta_time;
-			camera_moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_DOWN)) {
-			rotate.v[1] -= camera_heading_speed * delta_time;
-			camera_moved = true;
-		}
+		// TRANSLATIONS		
+		float move_delta = camera_speed * delta_time;
 		
-		// Yaw
-		if (glfwGetKey(window, GLFW_KEY_LEFT)) {			
-			rotate.v[2] += camera_heading_speed * delta_time;
-			// printf("cam_yaw %f speed %f delta %f\n",rotate.v[2], camera_heading_speed, delta_time);
+		if (move_left) {
 			camera_moved = true;
+			move_camera_x(-move_delta);
 		}
-		if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
-			rotate.v[2] -= camera_heading_speed * delta_time;
+		if (move_right) {
 			camera_moved = true;
+			move_camera_x(move_delta);
+		}
+		if (move_up) {
+			camera_moved = true;
+			move_camera_y(-move_delta);
+		}
+		if (move_down) {
+			camera_moved = true;
+			move_camera_y(move_delta);
+		}
+		if (move_forward) {
+			camera_moved = true;
+			move_camera_z(-move_delta);
+		}
+		if (move_backward) {
+			camera_moved = true;
+			move_camera_z(move_delta);
+		}		
+		
+		// ROTATIONS		
+		float rotation_delta = camera_heading_speed * delta_time;
+		if (roll_left) {
+			camera_moved = true;
+			roll_camera(rotation_delta);
+		}
+		if (roll_right) {
+			camera_moved = true;
+			roll_camera(-rotation_delta);
+		}
+		if (pitch_up) {
+			camera_moved = true;
+			pitch_camera(rotation_delta);
+		}
+		if (pitch_down) {
+			camera_moved = true;
+			pitch_camera(-rotation_delta);
+		}
+		if (yaw_left) {
+			camera_moved = true;
+			yaw_camera(rotation_delta);
+		}
+		if (yaw_right) {
+			camera_moved = true;
+			yaw_camera(-rotation_delta);
 		}
 
-		if (camera_moved) {
-
-			view_matrix = move_camera(move, rotate);
+		if (camera_moved) {			
+			view_matrix = move_camera();
 			glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
-
 		}
 
 		last_update_time = now;

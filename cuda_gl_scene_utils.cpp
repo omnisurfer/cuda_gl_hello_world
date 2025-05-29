@@ -3,6 +3,8 @@
 
 #include "cuda_gl_scene_utils.h"
 
+bool camera_moved_ = false;
+
 int width = 1024;
 int height = 768;
 
@@ -21,6 +23,9 @@ float quaternion[4];
 
 mat4* proj_matrix = NULL;
 mat4 R;
+
+vec3 move_(0.0f, 0.0f, 0.0f);
+vec3 rotate_(0.0f, 0.0f, 0.0f);
 
 vec4 forward(0.0, 0.0, -1.0f, 0.0f);
 vec4 right(1.0, 0.0, 0.0f, 0.0f);
@@ -99,6 +104,32 @@ OpenGL 4 Example Code.
 Accompanies written series "Anton's OpenGL 4 Tutorials"
 */
 
+void move_camera_x(float move_x) {
+	move_.v[0] = move_x;
+	camera_moved_ = true;
+}
+void move_camera_y(float move_y) {
+	move_.v[1] = move_y;
+	camera_moved_ = true;
+}
+void move_camera_z(float move_z) {
+	move_.v[2] = move_z;
+	camera_moved_ = true;
+}
+
+void roll_camera(float roll) {
+	rotate_.v[0] = roll;
+	camera_moved_ = true;
+}
+void pitch_camera(float pitch) {
+	rotate_.v[1] = pitch;
+	camera_moved_ = true;
+}
+void yaw_camera(float yaw) {
+	rotate_.v[2] = yaw;
+	camera_moved_ = true;
+}
+
 void init_camera() {
 	create_versor(quaternion, -camera_heading, 0.0f, 1.0f, 0.0f);
 	quat_to_mat4(R.m, quaternion);
@@ -139,12 +170,12 @@ bool configure_camera(
 	return true;
 }
 
-mat4 move_camera(vec3 move, vec3 rotate) {
+mat4 move_camera() {
 	
 	// process roll
 	if (true) {
 		float q_roll[4];
-		create_versor(q_roll, rotate.v[0], forward.v[0], forward.v[1], forward.v[2]);
+		create_versor(q_roll, rotate_.v[0], forward.v[0], forward.v[1], forward.v[2]);
 		mult_quat_quat(quaternion, q_roll, quaternion);
 
 		quat_to_mat4(R.m, quaternion);
@@ -156,7 +187,7 @@ mat4 move_camera(vec3 move, vec3 rotate) {
 	// process pitch
 	if (true) {
 		float q_pitch[4];
-		create_versor(q_pitch, rotate.v[1], right.v[0], right.v[1], right.v[2]);
+		create_versor(q_pitch, rotate_.v[1], right.v[0], right.v[1], right.v[2]);
 		mult_quat_quat(quaternion, q_pitch, quaternion);
 
 		quat_to_mat4(R.m, quaternion);
@@ -168,8 +199,8 @@ mat4 move_camera(vec3 move, vec3 rotate) {
 	// process yaw
 	if (true) {
 		float q_yaw[4];
-		create_versor(q_yaw, rotate.v[2], up.v[0], up.v[1], up.v[2]);
-		mult_quat_quat(quaternion, q_yaw, quaternion);	
+		create_versor(q_yaw, rotate_.v[2], up.v[0], up.v[1], up.v[2]);
+		mult_quat_quat(quaternion, q_yaw, quaternion);
 		quat_to_mat4(R.m, quaternion);
 
 		forward = R * vec4(0.0, 0.0, -1.0, 0.0);
@@ -177,26 +208,33 @@ mat4 move_camera(vec3 move, vec3 rotate) {
 		up = R * vec4(0.0, 1.0, 0.0, 0.0);
 	}
 
-	//printf("f x/y/z/w %f / %f / %f / %f\n", forward.v[0], forward.v[1], forward.v[2], forward.v[3]);
-	//printf("r x/y/z/w %f / %f / %f / %f\n", right.v[0], right.v[1], right.v[2], right.v[3]);
-	//printf("u x/y/z/w %f / %f / %f / %f\n", up.v[0], up.v[1], up.v[2], up.v[3]);
-
 	// process with movement
 	quat_to_mat4(R.m, quaternion);
-	camera_position = camera_position + vec3( forward ) * -move.v[2]; // positive z is pointing towards viewer
-	camera_position = camera_position + vec3( up ) * move.v[1];
-	camera_position = camera_position + vec3( right ) * move.v[0];
+	camera_position = camera_position + vec3(forward) * -move_.v[2]; // positive z is pointing towards viewer
+	camera_position = camera_position + vec3(up) * move_.v[1];
+	camera_position = camera_position + vec3(right) * move_.v[0];
 	mat4 T = translate(identity_mat4(), vec3(camera_position));
 
-	// checking for fp errors
-	// printf ("dot fwd . up %f\n", dot (forward, up));
-	// printf ("dot rgt . up %f\n", dot (right, up));
-	// printf ("dot fwd . rgt %f\n", dot (forward, right));
-
-	// printf("cam pos x/y/z %f / %f / %f\n", camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-	// printf("mov vec x/y/z %f / %f / %f\n", move.v[0], move.v[1], move.v[2]);
-
 	mat4 view_matrix = inverse(R) * inverse(T);
+
+	move_.v[0] = 0.0f;
+	move_.v[1] = 0.0f;
+	move_.v[2] = 0.0f;
+
+	rotate_.v[0] = 0.0f;
+	rotate_.v[1] = 0.0f;
+	rotate_.v[2] = 0.0f;
+
+	return view_matrix;
+
+}
+
+mat4 move_camera(vec3 move, vec3 rotate) {
+
+	move_ = move;
+	rotate_ = rotate;
+
+	mat4 view_matrix = move_camera();
 
 	return view_matrix;
 }
