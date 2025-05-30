@@ -15,6 +15,10 @@
 #define NUM_OF_SPHERS 4
 
 scene_key_callback_ptr scene_key_callback_function_ptr = nullptr;
+scene_mouse_button_callback_ptr scene_mouse_button_callback_function_ptr = nullptr;
+
+mat4 view_matrix;
+mat4 projection_matrix;
 
 double delta_time = 0.0f;
 
@@ -36,6 +40,135 @@ bool pitch_down = false;
 
 bool yaw_right = false;
 bool yaw_left = false;
+
+bool mouse_button_left = false;
+bool mouse_button_middle = false;
+bool mouse_button_right = false;
+
+vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y) {
+
+	int window_width, window_height;
+	glfwGetWindowSize(window, &window_width, &window_height);
+
+	// screen space (viewport coordinates)
+	float x = (2.0f * mouse_x) / (float)window_width - 1.0f;
+	float y = 1.0f - (2.0f * mouse_y) / (float)window_height;
+	float z = 1.0f;
+
+	vec3 ray_normalized_device_space = vec3(x, y, z);
+	
+	if (false) {
+		printf("dev space %f %f %f %f\n",
+			ray_normalized_device_space.v[0],
+			ray_normalized_device_space.v[1],
+			ray_normalized_device_space.v[2]
+		);
+	}
+
+	// clip space
+	vec4 ray_clip_space = vec4(ray_normalized_device_space.v[0], ray_normalized_device_space.v[1], -1.0, 1.0);
+	
+	if (false) {
+		printf("clip space %f %f %f %f\n",
+			ray_clip_space.v[0],
+			ray_clip_space.v[1],
+			ray_clip_space.v[2],
+			ray_clip_space.v[3]
+		);
+	}
+
+	// eye space
+	vec4 ray_eye_space = inverse(projection_matrix) * ray_clip_space;
+
+	if (false) {
+		printf("eye space pre %f %f %f %f\n",
+			ray_eye_space.v[0],
+			ray_eye_space.v[1],
+			ray_eye_space.v[2],
+			ray_eye_space.v[3]
+		);
+	}
+
+	ray_eye_space = vec4(ray_eye_space.v[0], ray_eye_space.v[1], -1.0, 0.0);
+
+	if (false) {
+		printf("eye space post %f %f %f %f\n",
+			ray_eye_space.v[0],
+			ray_eye_space.v[1],
+			ray_eye_space.v[2],
+			ray_eye_space.v[3]
+		);
+	}
+
+	// world space
+	vec3 ray_world_space = vec3(inverse(view_matrix) * ray_eye_space);
+	
+	if (false) {
+		printf("world space raw %f %f %f %f\n",
+			ray_world_space.v[0],
+			ray_world_space.v[1],
+			ray_world_space.v[2]
+		);
+	}
+
+	ray_world_space = normalise(ray_world_space);
+
+	if (false) {
+		printf("world space norm %f %f %f %f\n",
+			ray_world_space.v[0],
+			ray_world_space.v[1],
+			ray_world_space.v[2]
+		);
+	}
+
+	return ray_world_space;
+}
+
+/* taken from 07_ray_picking */
+bool ray_sphere_intersect(vec3 ray_origin_world, vec3 ray_direction_world, vec3 sphere_center_world, float sphere_radius, float* intersection_distance) {
+	
+	vec3 dist_to_sphere = ray_origin_world - sphere_center_world;
+	float b = dot(ray_direction_world, dist_to_sphere);
+	float c = dot(dist_to_sphere, dist_to_sphere) - sphere_radius * sphere_radius;
+	float b_squared_minus_c = b * b - c;
+
+	// check for imaginary answers. Ray completely missies sphere
+	if (b_squared_minus_c < 0.0f) {
+		return false;
+	}
+
+	if (b_squared_minus_c > 0.0f) {
+		// get the 2 intersection distances along the ray
+		float t_a = -b + sqrt(b_squared_minus_c);
+		float t_b = -b - sqrt(b_squared_minus_c);
+		*intersection_distance = t_b;
+
+		// if behind viewer, throw one or both away
+		if (t_a < 0.0) {
+			if (t_b < 0.0) {
+				return false;
+			}
+			else if (t_b < 0.0) {
+				*intersection_distance = t_a;
+			}
+		}
+
+		return true;
+	}
+
+	if (b_squared_minus_c == 0.0f) {
+		// if behind the viewer
+		float t = -b + sqrt(b_squared_minus_c);
+
+		if (t < 0.0f) {
+			return false;
+		}
+		*intersection_distance = t;
+		return true;
+	}
+	// note: check for ray origin is inside sphere radius could occur.
+	return false;
+}
 
 void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
@@ -118,6 +251,48 @@ void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int 
 	}
 }
 
+void scene_mouse_button_callback_function(GLFWwindow* window, int button, int action, int mods) {
+
+	if (action == GLFW_PRESS) {
+
+		printf("press ");
+
+		if (button == GLFW_MOUSE_BUTTON_1) {
+			printf("button 1\n");
+			mouse_button_left = true;
+		}		
+
+		if (button == GLFW_MOUSE_BUTTON_2) {
+			printf("button 2\n");
+			mouse_button_right = true;
+		}		
+
+		if (button == GLFW_MOUSE_BUTTON_3) {
+			printf("button 3\n");
+			mouse_button_middle = true;
+		}		
+	}
+	else if (action == GLFW_RELEASE) {
+
+		printf("relase ");
+
+		if (button == GLFW_MOUSE_BUTTON_1) {
+			printf("button 1\n");
+			mouse_button_left = false;
+		}		
+
+		if (button == GLFW_MOUSE_BUTTON_2) {
+			printf("button 2\n");
+			mouse_button_right = false;
+		}		
+
+		if (button == GLFW_MOUSE_BUTTON_3) {
+			printf("button 3\n");
+			mouse_button_middle = false;
+		}		
+	}
+}
+
 /* Derived from 06_vcam_with_quaternion */
 int draw_q_camera_triangle(GLFWwindow* window) {
 
@@ -126,22 +301,29 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 	float camera_heading = 0.0f; // y-rotation in degrees
 
 	scene_key_callback_function_ptr = scene_key_callback_function;
-
+	
 	if (scene_key_callback_function_ptr != nullptr) {
 		set_scene_key_callback_function(scene_key_callback_function_ptr);
 	}
 
+	scene_mouse_button_callback_function_ptr = scene_mouse_button_callback_function;
+
+	if (scene_mouse_button_callback_function_ptr != nullptr) {
+		set_scene_mouse_button_callback_function(scene_mouse_button_callback_function_ptr);
+	}
+
 	/* create camera */
-	mat4 view_matrix;
-	mat4 projection_matrix;
-	vec3 camera_position(0.0f, 0.0f, 5.0f);
-	// float camera_heading = 0.0f;
+	// mat4 view_matrix;
+	// mat4 projection_matrix;
+	vec3 camera_position(0.0f, 0.0f, 5.0f);	
 	vec3 sphere_positions_world[] = {
 		vec3(-2.0, 0.0, 0.0),
 		vec3(2.0, 0.0, 0.0),
 		vec3(-2.0, 0.0, -2.0),
 		vec3(1.5, 1.0, -1.0),
 	};
+
+	const float sphere_radius = 1.0f;
 	
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
@@ -324,6 +506,38 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		if (yaw_right) {
 			camera_moved = true;
 			yaw_camera(-rotation_delta);
+		}
+
+		// MOUSE PROCESSING
+		if (mouse_button_left) {
+			double x_position, y_position;
+			int selected_sphere = -1;
+
+			glfwGetCursorPos(window, &x_position, &y_position);
+
+			// printf("x_pos %f y_pos %f\n", x_position, y_position);
+
+			vec3 ray_world = get_ray_from_mouse_coords(window, x_position, y_position);
+
+			// sphere check
+			int closest_sphere_clicked = -1;
+			float closest_intersection = 0.0f;
+
+			for (int i = 0; i < NUM_OF_SPHERS; i++) {
+				float t_distance = 0.0f;
+
+				if (ray_sphere_intersect(camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
+					
+					// only use cloest sphere
+					if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
+						closest_sphere_clicked = i;
+						closest_intersection = t_distance;
+					}
+
+				}
+			}
+			selected_sphere = closest_sphere_clicked;
+			printf("sphere %i was clicked\n", closest_sphere_clicked);
 		}
 
 		if (camera_moved) {			

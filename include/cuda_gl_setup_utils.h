@@ -12,10 +12,13 @@
 GLFWwindow* init_gl(int window_width, int window_height);
 
 typedef void (*scene_key_callback_ptr)(GLFWwindow* window, int key, int scancode, int action, int mods);
+typedef void (*scene_mouse_button_callback_ptr)(GLFWwindow* window, int button, int action, int mods);
 
 void set_scene_key_callback_function(scene_key_callback_ptr scene_key_callback);
+void set_scene_mouse_button_callback_function(scene_mouse_button_callback_ptr scene_mouse_callback);
 
 void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void gl_mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 void error_callback_glfw(int error, const char* description);
 
