@@ -1,4 +1,4 @@
-#include "cuda_gl_setup_utils.h"
+#include <cuda_gl_setup_utils.h>
 
 scene_key_callback_ptr scene_key_callback_function = nullptr;
 scene_mouse_button_callback_ptr scene_mouse_button_callback_function = nullptr;

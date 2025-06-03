@@ -1,11 +1,12 @@
 #pragma once
 
+#include <cuda_gl_setup_utils.h>
+#include <cuda_gl_scene_utils.h>
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #include <fstream>
-
-#include "cuda_gl_hello_world_utils.h"
 
 /* https://antongerdelan.net/opengl/hellotriangle.html */
 int draw_simple_triangle(GLFWwindow* window) {

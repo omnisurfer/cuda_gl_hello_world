@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir)\Common\utils\include;$(SolutionDir)\Common\glfw-3.4.bin.WIN64\include;$(SolutionDir)\Common\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir)\Common\utils\include;$(SolutionDir)\Common\glfw-3.4.bin.WIN64\include;$(SolutionDir)\Common\glad\include;$(SolutionDir)\gl_scenes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -81,9 +81,6 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Common\utils\maths_funcs.cpp" />
     <ClCompile Include="Common\utils\obj_parser.cpp" />
     <ClCompile Include="cuda_gl_hello_world.cpp" />
@@ -100,18 +97,20 @@
     <None Include="shaders\triangle_shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cube_map.h" />
+    <ClInclude Include="gl_scenes\cube_map.h" />
+    <ClInclude Include="gl_scenes\quat_camera_spheres.h" />
+    <ClInclude Include="gl_scenes\simple_triangle.h" />
     <ClInclude Include="include\cuda_gl_scene_utils.h" />
     <ClInclude Include="include\cuda_gl_setup_utils.h" />
-    <ClInclude Include="include\q_camera_triangle.h" />
-    <ClInclude Include="obj_parser.h" />
-    <ClInclude Include="simple_triangle.h" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="3d_objects\sphere.obj">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="kernels\kernel.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

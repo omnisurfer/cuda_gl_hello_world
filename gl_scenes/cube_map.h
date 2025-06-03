@@ -5,7 +5,7 @@
 
 #include <fstream>
 
-#include "cuda_gl_hello_world_utils.h"
+#include <stb_image.h>
 
 bool load_cube_map_side(
 	GLuint texture,

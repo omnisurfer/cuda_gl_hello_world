@@ -1,8 +1,8 @@
 /*
 * Using nvdia particles CUDA example for guidance.
 */
-#define _USE_MATH_DEFINES
-#include <cmath>
+// #define _USE_MATH_DEFINES
+// #include <cmath>
 
 // OpenGL Graphics includes
 /* https://www.glfw.org/documentation.html */
@@ -21,18 +21,18 @@
 #include <assert.h>
 
 // Utils
-#include "stb_image.h"
+#include <stb_image.h>
 
 // Anton's OpenGL Tutorial Includes
-#include "maths_funcs.h" 
-#include "obj_parser.h"
+#include <maths_funcs.h>
+#include <obj_parser.h>
 
-#include "cuda_gl_setup_utils.h"
-#include "cuda_gl_scene_utils.h"
+#include <cuda_gl_scene_utils.h>
+#include <cuda_gl_setup_utils.h>
 
-// drawings
+// scenes from the book
 #include "simple_triangle.h"
-#include "q_camera_triangle.h"
+#include "quat_camera_spheres.h"
 #include "cube_map.h"
 
 #define DISPLAY_HEIGHT 1080
@@ -59,21 +59,31 @@ int main(int arc, char** argvv) {
 		return -1;
 	}
 
-	draw_q_camera_triangle(window);
+	draw_quat_cam_spheres(window);
 
-	if (false) {
+	if (true) {
 		execute_kernel();
 
-		window = init_gl(1024, 1024);
+		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+		if (!window)
+		{
+			printf("Failed to create Open GL window");
+			return -1;
+		}		
+		draw_simple_triangle(window);
+	}
+
+	if (true) {		
+
+		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
 		{
 			printf("Failed to create Open GL window");
 			return -1;
 		}
-
-		// draw_cube_map(window);
-		draw_simple_triangle(window);
+		draw_cube_map(window);
 	}
 
 	return 0;

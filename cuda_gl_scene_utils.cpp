@@ -1,7 +1,8 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
-#include "cuda_gl_scene_utils.h"
+#include <stb_image.h>
+
+#include <cuda_gl_scene_utils.h>
 
 bool camera_moved_ = false;
 

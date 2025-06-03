@@ -5,8 +5,8 @@
 
 #include <fstream>
 
-#include "cuda_gl_setup_utils.h"
-#include "cuda_gl_scene_utils.h"
+#include <cuda_gl_setup_utils.h>
+#include <cuda_gl_scene_utils.h>
 
 #define VERTEX_SHADER_FILE "shaders\\q_camera_shader.vert"
 #define FRAGMENT_SHADER_FILE "shaders\\q_camera_shader.frag"
@@ -58,7 +58,7 @@ vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y)
 	vec3 ray_normalized_device_space = vec3(x, y, z);
 	
 	if (false) {
-		printf("dev space %f %f %f %f\n",
+		printf("dev space %f %f %f\n",
 			ray_normalized_device_space.v[0],
 			ray_normalized_device_space.v[1],
 			ray_normalized_device_space.v[2]
@@ -104,7 +104,7 @@ vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y)
 	vec3 ray_world_space = vec3(inverse(view_matrix) * ray_eye_space);
 	
 	if (false) {
-		printf("world space raw %f %f %f %f\n",
+		printf("world space raw %f %f %f\n",
 			ray_world_space.v[0],
 			ray_world_space.v[1],
 			ray_world_space.v[2]
@@ -114,7 +114,7 @@ vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y)
 	ray_world_space = normalise(ray_world_space);
 
 	if (false) {
-		printf("world space norm %f %f %f %f\n",
+		printf("world space norm %f %f %f\n",
 			ray_world_space.v[0],
 			ray_world_space.v[1],
 			ray_world_space.v[2]
@@ -293,8 +293,8 @@ void scene_mouse_button_callback_function(GLFWwindow* window, int button, int ac
 	}
 }
 
-/* Derived from 06_vcam_with_quaternion */
-int draw_q_camera_triangle(GLFWwindow* window) {
+/* From 06_vcam_with_quaternion */
+int draw_quat_cam_spheres(GLFWwindow* window) {
 
 	float camera_speed = 5.0f; // 1 unit per second?
 	float camera_heading_speed = 100.0f; //30 degrees per second
@@ -312,9 +312,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		set_scene_mouse_button_callback_function(scene_mouse_button_callback_function_ptr);
 	}
 
-	/* create camera */
-	// mat4 view_matrix;
-	// mat4 projection_matrix;
+	/* create camera */	
 	vec3 camera_position(0.0f, 0.0f, 5.0f);	
 	vec3 sphere_positions_world[] = {
 		vec3(-2.0, 0.0, 0.0),
@@ -465,7 +463,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 
 		/* Update camera outside FPS loop */
 		// TRANSLATIONS		
-		float move_delta = camera_speed * delta_time;
+		float move_delta = camera_speed * (float)delta_time;
 		
 		if (move_left) {
 			camera_moved = true;
@@ -493,7 +491,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		}		
 		
 		// ROTATIONS		
-		float rotation_delta = camera_heading_speed * delta_time;
+		float rotation_delta = camera_heading_speed * (float)delta_time;
 		if (roll_left) {
 			camera_moved = true;
 			roll_camera(rotation_delta);
@@ -527,7 +525,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 
 			// printf("x_pos %f y_pos %f\n", x_position, y_position);
 
-			vec3 ray_world = get_ray_from_mouse_coords(window, x_position, y_position);
+			vec3 ray_world = get_ray_from_mouse_coords(window, (float)x_position, (float)y_position);
 
 			// sphere check
 			int closest_sphere_clicked = -1;
@@ -559,7 +557,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 		/* Poll for and process events */
 		glfwPollEvents();
 	}
-
+	
 	glfwTerminate();
 
 	return 0;

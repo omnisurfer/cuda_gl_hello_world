@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="shaders">
       <UniqueIdentifier>{b0e15d40-d6c8-4c96-aed1-c38e110dabde}</UniqueIdentifier>
     </Filter>
@@ -15,6 +12,12 @@
     </Filter>
     <Filter Include="3d_objects">
       <UniqueIdentifier>{e8b1ead2-4087-46dc-8301-6b63399993ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gl_scenes">
+      <UniqueIdentifier>{9ea14fbf-78c1-4fcd-963c-d8e15f8bccf5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kernels">
+      <UniqueIdentifier>{f7a5cccf-00bc-4efe-a177-5b9e875bab99}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -53,25 +56,27 @@
     <ClInclude Include="include\cuda_gl_setup_utils.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="simple_triangle.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="cube_map.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\q_camera_triangle.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cuda_gl_scene_utils.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="obj_parser.h">
-      <Filter>include</Filter>
+    <ClInclude Include="gl_scenes\cube_map.h">
+      <Filter>gl_scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_scenes\quat_camera_spheres.h">
+      <Filter>gl_scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_scenes\simple_triangle.h">
+      <Filter>gl_scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Object Include="3d_objects\sphere.obj">
       <Filter>3d_objects</Filter>
     </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="kernels\kernel.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

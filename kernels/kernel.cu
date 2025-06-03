@@ -13,8 +13,7 @@ __global__ void addKernel(int *c, const int *a, const int *b)
 }
 
 extern "C"
-{
-    // int main()
+{    
     int execute_kernel()
     {
         const int arraySize = 5;
