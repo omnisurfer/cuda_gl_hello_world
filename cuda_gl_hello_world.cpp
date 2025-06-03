@@ -49,20 +49,23 @@ int main(int arc, char** argvv) {
 
 	printf("Starting cuda_gl_hello_world\n");
 
-
-	// TODO turn this into a function?
-	window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
-	if (!window)
-	{
-		printf("Failed to create Open GL window");
-		return -1;
-	}
-
-	draw_quat_cam_spheres(window);
-
 	if (true) {
 		execute_kernel();
+	}
+	
+	if (true) {
+		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+		if (!window)
+		{
+			printf("Failed to create Open GL window");
+			return -1;
+		}
+
+		draw_quat_cam_spheres(window);
+	}
+
+	if (true) {		
 
 		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
@@ -74,7 +77,7 @@ int main(int arc, char** argvv) {
 		draw_simple_triangle(window);
 	}
 
-	if (true) {		
+	if (true) {
 
 		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

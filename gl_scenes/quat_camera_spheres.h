@@ -8,8 +8,8 @@
 #include <cuda_gl_setup_utils.h>
 #include <cuda_gl_scene_utils.h>
 
-#define VERTEX_SHADER_FILE "shaders\\q_camera_shader.vert"
-#define FRAGMENT_SHADER_FILE "shaders\\q_camera_shader.frag"
+#define SPHERE_VERTEX_SHADER_FILE "quat_camera_shader.vert"
+#define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"
 
 #define MESH_FILE "3d_objects/sphere.obj"
 #define NUM_OF_SPHERS 4
@@ -293,6 +293,11 @@ void scene_mouse_button_callback_function(GLFWwindow* window, int button, int ac
 	}
 }
 
+bool process_movements(float move_delta) {
+
+	return false;
+}
+
 /* From 06_vcam_with_quaternion */
 int draw_quat_cam_spheres(GLFWwindow* window) {
 
@@ -343,7 +348,11 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	GLfloat* vertex_normals = NULL;
 	GLfloat* texture_coordinates = NULL;
 	int point_count = 0;
-	load_obj_file(MESH_FILE, vertex_points, texture_coordinates, vertex_normals, point_count);
+
+	std::string mesh_file_path = ASSETS_DIRECTORY;
+	mesh_file_path.append(MESH_FILE);
+
+	load_obj_file(mesh_file_path.c_str(), vertex_points, texture_coordinates, vertex_normals, point_count);
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -359,7 +368,13 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	}
 
 	/* Create shaders */
-	GLuint shader_program = compile_and_link_shader_program_from_files(VERTEX_SHADER_FILE, FRAGMENT_SHADER_FILE);
+	std::string vertex_shader_file_path = SHADER_DIRECTORY;
+	vertex_shader_file_path.append(SPHERE_VERTEX_SHADER_FILE);
+
+	std::string frag_shader_file_path = SHADER_DIRECTORY;
+	frag_shader_file_path.append(SPHERE_FRAGMENT_SHADER_FILE);
+
+	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
 	int model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
 	int view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
 	int project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
@@ -465,86 +480,88 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 		// TRANSLATIONS		
 		float move_delta = camera_speed * (float)delta_time;
 		
-		if (move_left) {
-			camera_moved = true;
-			move_camera_x(-move_delta);
-		}
-		if (move_right) {
-			camera_moved = true;
-			move_camera_x(move_delta);
-		}
-		if (move_up) {
-			camera_moved = true;
-			move_camera_y(-move_delta);
-		}
-		if (move_down) {
-			camera_moved = true;
-			move_camera_y(move_delta);
-		}
-		if (move_forward) {
-			camera_moved = true;
-			move_camera_z(-move_delta);
-		}
-		if (move_backward) {
-			camera_moved = true;
-			move_camera_z(move_delta);
-		}		
-		
-		// ROTATIONS		
-		float rotation_delta = camera_heading_speed * (float)delta_time;
-		if (roll_left) {
-			camera_moved = true;
-			roll_camera(rotation_delta);
-		}
-		if (roll_right) {
-			camera_moved = true;
-			roll_camera(-rotation_delta);
-		}
-		if (pitch_up) {
-			camera_moved = true;
-			pitch_camera(rotation_delta);
-		}
-		if (pitch_down) {
-			camera_moved = true;
-			pitch_camera(-rotation_delta);
-		}
-		if (yaw_left) {
-			camera_moved = true;
-			yaw_camera(rotation_delta);
-		}
-		if (yaw_right) {
-			camera_moved = true;
-			yaw_camera(-rotation_delta);
-		}
-
-		// MOUSE PROCESSING
-		if (mouse_button_left) {
-			double x_position, y_position;			
-
-			glfwGetCursorPos(window, &x_position, &y_position);
-
-			// printf("x_pos %f y_pos %f\n", x_position, y_position);
-
-			vec3 ray_world = get_ray_from_mouse_coords(window, (float)x_position, (float)y_position);
-
-			// sphere check
-			int closest_sphere_clicked = -1;
-			float closest_intersection = 0.0f;
-
-			for (int i = 0; i < NUM_OF_SPHERS; i++) {
-				float t_distance = 0.0f;
-
-				if (ray_sphere_intersect(camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
-					
-					// only use cloest sphere
-					if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
-						closest_sphere_clicked = i;
-						closest_intersection = t_distance;
-					}					
-				}
+		if (true) {
+			if (move_left) {
+				camera_moved = true;
+				move_camera_x(-move_delta);
 			}
-			selected_sphere = closest_sphere_clicked;
-			// printf("sphere %i was selected\n", selected_sphere);
+			if (move_right) {
+				camera_moved = true;
+				move_camera_x(move_delta);
+			}
+			if (move_up) {
+				camera_moved = true;
+				move_camera_y(-move_delta);
+			}
+			if (move_down) {
+				camera_moved = true;
+				move_camera_y(move_delta);
+			}
+			if (move_forward) {
+				camera_moved = true;
+				move_camera_z(-move_delta);
+			}
+			if (move_backward) {
+				camera_moved = true;
+				move_camera_z(move_delta);
+			}
+
+			// ROTATIONS		
+			float rotation_delta = camera_heading_speed * (float)delta_time;
+			if (roll_left) {
+				camera_moved = true;
+				roll_camera(rotation_delta);
+			}
+			if (roll_right) {
+				camera_moved = true;
+				roll_camera(-rotation_delta);
+			}
+			if (pitch_up) {
+				camera_moved = true;
+				pitch_camera(rotation_delta);
+			}
+			if (pitch_down) {
+				camera_moved = true;
+				pitch_camera(-rotation_delta);
+			}
+			if (yaw_left) {
+				camera_moved = true;
+				yaw_camera(rotation_delta);
+			}
+			if (yaw_right) {
+				camera_moved = true;
+				yaw_camera(-rotation_delta);
+			}
+
+			// MOUSE PROCESSING
+			if (mouse_button_left) {
+				double x_position, y_position;
+
+				glfwGetCursorPos(window, &x_position, &y_position);
+
+				// printf("x_pos %f y_pos %f\n", x_position, y_position);
+
+				vec3 ray_world = get_ray_from_mouse_coords(window, (float)x_position, (float)y_position);
+
+				// sphere check
+				int closest_sphere_clicked = -1;
+				float closest_intersection = 0.0f;
+
+				for (int i = 0; i < NUM_OF_SPHERS; i++) {
+					float t_distance = 0.0f;
+
+					if (ray_sphere_intersect(camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
+
+						// only use cloest sphere
+						if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
+							closest_sphere_clicked = i;
+							closest_intersection = t_distance;
+						}
+					}
+				}
+				selected_sphere = closest_sphere_clicked;
+				// printf("sphere %i was selected\n", selected_sphere);
+			}
 		}
 
 		if (camera_moved) {			

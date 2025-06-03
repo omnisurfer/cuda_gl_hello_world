@@ -86,8 +86,14 @@ int draw_simple_triangle(GLFWwindow* window) {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	/**/
+	
+	std::string vertex_shader_file_path = SHADER_DIRECTORY;
+	vertex_shader_file_path.append("triangle_shader.vert");
 
-	GLuint shader_program = compile_and_link_shader_program_from_files("shaders\\triangle_shader.vert", "shaders\\triangle_shader.frag");
+	std::string frag_shader_file_path = SHADER_DIRECTORY;
+	frag_shader_file_path.append("triangle_shader.frag");
+
+	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
 
 	int translation_matrix_location = glGetUniformLocation(shader_program, "translation_matrix");
 	int rotation_matrix_location = glGetUniformLocation(shader_program, "rotation_matrix");

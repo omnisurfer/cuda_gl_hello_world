@@ -7,6 +7,11 @@
 
 #include <stb_image.h>
 
+#define CUBE_VERTEX_SHADER_FILE "cube_shader.vert"
+#define CUBE_FRAGMENT_SHADER_FILE "cube_shader.frag"
+
+#define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
+
 bool load_cube_map_side(
 	GLuint texture,
 	GLenum side_target,
@@ -142,17 +147,26 @@ int draw_cube_map(GLFWwindow* window) {
 
 	GLuint dummy_texture_cube;
 
+	std::string cube_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
+	cube_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
+
 	create_cube_map(
-		"Common\\assets\\Yokohama3\\posz.jpg",
-		"Common\\assets\\Yokohama3\\negz.jpg",
-		"Common\\assets\\Yokohama3\\posy.jpg",
-		"Common\\assets\\Yokohama3\\negy.jpg",
-		"Common\\assets\\Yokohama3\\posx.jpg",
-		"Common\\assets\\Yokohama3\\negx.jpg",
+		std::string(cube_map_file_path).append("posz.jpg").c_str(),
+		std::string(cube_map_file_path).append("negz.jpg").c_str(),
+		std::string(cube_map_file_path).append("posy.jpg").c_str(),
+		std::string(cube_map_file_path).append("negy.jpg").c_str(),
+		std::string(cube_map_file_path).append("posx.jpg").c_str(),
+		std::string(cube_map_file_path).append("negx.jpg").c_str(),
 		&dummy_texture_cube
 	);
 
-	GLuint shader_program = compile_and_link_shader_program_from_files("shaders\\cube_shader.vert", "shaders\\cube_shader.frag");
+	std::string vertex_shader_file_path = SHADER_DIRECTORY;
+	vertex_shader_file_path.append(CUBE_VERTEX_SHADER_FILE);
+
+	std::string frag_shader_file_path = SHADER_DIRECTORY;
+	frag_shader_file_path.append(CUBE_FRAGMENT_SHADER_FILE);
+
+	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());	
 
 	if (shader_program > 0)
 	{
