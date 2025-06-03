@@ -1,6 +1,6 @@
 # version 410 core
 
-in vec3 color;
+in vec3 color;z
 out vec4 frag_color;
 
 void main() {

@@ -365,6 +365,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 	int model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
 	int view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
 	int project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
+	int blue_frag_channel_location = glGetUniformLocation(shader_program, "blue_frag_channel");
 
 	if (shader_program <= 0)
 	{	
@@ -381,7 +382,6 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 	for (int i = 0; i < NUM_OF_SPHERS; i++) {
 		model_matrices[i] = translate(identity_mat4(), sphere_positions_world[i]);
 	}
-
 
 	/* opengl configuration */
 	glEnable(GL_DEPTH_TEST);	// enable depth-testing
@@ -402,6 +402,8 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 	const double fps_limit_period = 1 / fps_limit_frequency;
 	double last_update_time = 0;
 	double last_frame_time = 0;
+
+	int selected_sphere = -1;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -436,6 +438,15 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 			
 			glUseProgram(shader_program);
 			for (int i = 0; i < NUM_OF_SPHERS; i++) {
+
+				// color selected spheres
+				if (selected_sphere == i) {					
+					glUniform1f(blue_frag_channel_location, 1.0f);					
+				}
+				else {
+					glUniform1f(blue_frag_channel_location, 0.0f);
+				}
+
 				glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[i].m);
 				glDrawArrays(GL_TRIANGLES, 0, point_count);
 			}
@@ -510,8 +521,7 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 
 		// MOUSE PROCESSING
 		if (mouse_button_left) {
-			double x_position, y_position;
-			int selected_sphere = -1;
+			double x_position, y_position;			
 
 			glfwGetCursorPos(window, &x_position, &y_position);
 
@@ -532,12 +542,11 @@ int draw_q_camera_triangle(GLFWwindow* window) {
 					if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
 						closest_sphere_clicked = i;
 						closest_intersection = t_distance;
-					}
-
+					}					
 				}
 			}
 			selected_sphere = closest_sphere_clicked;
-			printf("sphere %i was clicked\n", closest_sphere_clicked);
+			// printf("sphere %i was selected\n", selected_sphere);
 		}
 
 		if (camera_moved) {			
