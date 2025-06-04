@@ -84,18 +84,6 @@ void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-	// TODO: MOVE RELOAD OUT OF GLOBAL KEY CAPTURE
-	else if (key == GLFW_KEY_R) {
-		printf("Recompiling shaders - MOVE THIS OUT OF SETUP UTILS AND IMPLEMENT PER SCENE!\n");
-
-		GLuint shader_program = compile_and_link_shader_program_from_files("shaders\\triangle_shader.vert", "shaders\\triangle_shader.frag");
-
-		if (shader_program > 0)
-		{
-			glUseProgram(shader_program);
-		}
-	}
-
 	if (scene_key_callback_function != nullptr) {
 		scene_key_callback_function(window, key, scancode, action, mods);
 	}

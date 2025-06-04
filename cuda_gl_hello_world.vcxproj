@@ -91,8 +91,8 @@
   <ItemGroup>
     <None Include="shaders\cube_shader.frag" />
     <None Include="shaders\cube_shader.vert" />
-    <None Include="shaders\q_camera_shader.frag" />
-    <None Include="shaders\q_camera_shader.vert" />
+    <None Include="shaders\quat_camera_shader.frag" />
+    <None Include="shaders\quat_camera_shader.vert" />
     <None Include="shaders\triangle_shader.frag" />
     <None Include="shaders\triangle_shader.vert" />
   </ItemGroup>

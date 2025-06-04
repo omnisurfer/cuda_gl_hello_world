@@ -12,6 +12,7 @@
 #define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"
 
 #define MESH_FILE "3d_objects/sphere.obj"
+
 #define NUM_OF_SPHERS 4
 
 scene_key_callback_ptr scene_key_callback_function_ptr = nullptr;
@@ -19,6 +20,9 @@ scene_mouse_button_callback_ptr scene_mouse_button_callback_function_ptr = nullp
 
 mat4 view_matrix;
 mat4 projection_matrix;
+
+std::string vertex_shader_file_path;
+std::string frag_shader_file_path;
 
 double delta_time = 0.0f;
 
@@ -44,6 +48,8 @@ bool yaw_left = false;
 bool mouse_button_left = false;
 bool mouse_button_middle = false;
 bool mouse_button_right = false;
+
+bool re_compile_shdaer = false;
 
 vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y) {
 
@@ -249,6 +255,27 @@ void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int 
 	else {
 		yaw_right = false;
 	}
+
+	// reload shader
+	if (key == GLFW_KEY_R && action == 0) {
+
+		re_compile_shdaer = true;
+
+		if (false) {
+			printf("Recompiling shaders %s\n", frag_shader_file_path.c_str());
+
+			GLuint shader_program = compile_and_link_shader_program_from_files(
+				vertex_shader_file_path.c_str(),
+				frag_shader_file_path.c_str()
+			);
+
+			if (shader_program > 0)
+			{
+				printf("USING NEW SHADER");
+				glUseProgram(shader_program);
+			}
+		}
+	}
 }
 
 void scene_mouse_button_callback_function(GLFWwindow* window, int button, int action, int mods) {
@@ -368,10 +395,10 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	}
 
 	/* Create shaders */
-	std::string vertex_shader_file_path = SHADER_DIRECTORY;
+	vertex_shader_file_path = SHADER_DIRECTORY;
 	vertex_shader_file_path.append(SPHERE_VERTEX_SHADER_FILE);
 
-	std::string frag_shader_file_path = SHADER_DIRECTORY;
+	frag_shader_file_path = SHADER_DIRECTORY;
 	frag_shader_file_path.append(SPHERE_FRAGMENT_SHADER_FILE);
 
 	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
@@ -569,6 +596,29 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 			glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
 		}
 
+		if (re_compile_shdaer) {
+			printf("Recompiling shaders\n");
+
+			glDeleteProgram(shader_program);
+
+			shader_program = compile_and_link_shader_program_from_files(
+				vertex_shader_file_path.c_str(),
+				frag_shader_file_path.c_str()
+			);
+
+			model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
+			view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
+			project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
+			blue_frag_channel_location = glGetUniformLocation(shader_program, "blue_frag_channel");
+
+			if (shader_program > 0)
+			{				
+				glUseProgram(shader_program);
+				glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
+				glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, projection_matrix.m);
+			}
+			re_compile_shdaer = false;
+		}
 		last_update_time = now;
 
 		/* Poll for and process events */
@@ -578,5 +628,4 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	glfwTerminate();
 
 	return 0;
-
 }

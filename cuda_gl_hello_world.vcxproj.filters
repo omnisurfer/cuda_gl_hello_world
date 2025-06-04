@@ -33,10 +33,10 @@
     <None Include="shaders\cube_shader.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\q_camera_shader.frag">
+    <None Include="shaders\quat_camera_shader.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\q_camera_shader.vert">
+    <None Include="shaders\quat_camera_shader.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

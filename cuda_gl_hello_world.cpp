@@ -65,7 +65,7 @@ int main(int arc, char** argvv) {
 		draw_quat_cam_spheres(window);
 	}
 
-	if (true) {		
+	if (false) {
 
 		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
@@ -77,7 +77,7 @@ int main(int arc, char** argvv) {
 		draw_simple_triangle(window);
 	}
 
-	if (true) {
+	if (false) {
 
 		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
