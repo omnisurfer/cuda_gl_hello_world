@@ -25,6 +25,8 @@ void roll_camera(float roll);
 void pitch_camera(float pitch);
 void yaw_camera(float yaw);
 
+// vec3 camera_position;
+
 mat4 move_camera();
 mat4 move_camera(vec3 move, vec3 rotate);
 

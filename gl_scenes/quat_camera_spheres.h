@@ -18,8 +18,14 @@
 scene_key_callback_ptr scene_key_callback_function_ptr = nullptr;
 scene_mouse_button_callback_ptr scene_mouse_button_callback_function_ptr = nullptr;
 
+GLuint shader_program;
+
 mat4 view_matrix;
 mat4 projection_matrix;
+
+int model_matrix_location;
+int view_matrix_location;
+int project_matrix_location;
 
 std::string vertex_shader_file_path;
 std::string frag_shader_file_path;
@@ -48,8 +54,6 @@ bool yaw_left = false;
 bool mouse_button_left = false;
 bool mouse_button_middle = false;
 bool mouse_button_right = false;
-
-bool re_compile_shdaer = false;
 
 vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y) {
 
@@ -258,13 +262,13 @@ void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int 
 
 	// reload shader
 	if (key == GLFW_KEY_R && action == 0) {
-
-		re_compile_shdaer = true;
-
-		if (false) {
+		
+		if (true) {
 			printf("Recompiling shaders %s\n", frag_shader_file_path.c_str());
 
-			GLuint shader_program = compile_and_link_shader_program_from_files(
+			glDeleteProgram(shader_program);
+
+			shader_program = compile_and_link_shader_program_from_files(
 				vertex_shader_file_path.c_str(),
 				frag_shader_file_path.c_str()
 			);
@@ -273,6 +277,13 @@ void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int 
 			{
 				printf("USING NEW SHADER");
 				glUseProgram(shader_program);
+				
+				if (shader_program > 0)
+				{
+					glUseProgram(shader_program);
+					glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
+					glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, projection_matrix.m);
+				}
 			}
 		}
 	}
@@ -345,7 +356,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	}
 
 	/* create camera */	
-	vec3 camera_position(0.0f, 0.0f, 5.0f);	
+	vec3 camera_position(0.0f, 0.0f, 5.0f);
 	vec3 sphere_positions_world[] = {
 		vec3(-2.0, 0.0, 0.0),
 		vec3(2.0, 0.0, 0.0),
@@ -401,10 +412,10 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	frag_shader_file_path = SHADER_DIRECTORY;
 	frag_shader_file_path.append(SPHERE_FRAGMENT_SHADER_FILE);
 
-	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
-	int model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
-	int view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
-	int project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
+	shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
+	model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
+	view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
+	project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
 	int blue_frag_channel_location = glGetUniformLocation(shader_program, "blue_frag_channel");
 
 	if (shader_program <= 0)
@@ -595,30 +606,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 			view_matrix = move_camera();
 			glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
 		}
-
-		if (re_compile_shdaer) {
-			printf("Recompiling shaders\n");
-
-			glDeleteProgram(shader_program);
-
-			shader_program = compile_and_link_shader_program_from_files(
-				vertex_shader_file_path.c_str(),
-				frag_shader_file_path.c_str()
-			);
-
-			model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
-			view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
-			project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
-			blue_frag_channel_location = glGetUniformLocation(shader_program, "blue_frag_channel");
-
-			if (shader_program > 0)
-			{				
-				glUseProgram(shader_program);
-				glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
-				glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, projection_matrix.m);
-			}
-			re_compile_shdaer = false;
-		}
+		
 		last_update_time = now;
 
 		/* Poll for and process events */
