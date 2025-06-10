@@ -5,6 +5,7 @@
 
 #include <fstream>
 
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #define CUBE_VERTEX_SHADER_FILE "cube_shader.vert"

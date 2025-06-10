@@ -4,6 +4,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#include <iostream>
+#include <cmath>
+
 #include <maths_funcs.h>
 
 void init_camera();
@@ -25,7 +28,7 @@ void roll_camera(float roll);
 void pitch_camera(float pitch);
 void yaw_camera(float yaw);
 
-// vec3 camera_position;
+extern vec3 camera_position;
 
 mat4 move_camera();
 mat4 move_camera(vec3 move, vec3 rotate);

@@ -8,6 +8,8 @@
 #include <cuda_gl_setup_utils.h>
 #include <cuda_gl_scene_utils.h>
 
+#include <cuda_gl_camera.h>
+
 #define SPHERE_VERTEX_SHADER_FILE "quat_camera_shader.vert"
 #define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"
 
@@ -31,6 +33,8 @@ std::string vertex_shader_file_path;
 std::string frag_shader_file_path;
 
 double delta_time = 0.0f;
+
+vec3 camera_position;
 
 // TODO turn into bitfield?
 bool move_forward = false;
@@ -356,7 +360,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	}
 
 	/* create camera */	
-	vec3 camera_position(0.0f, 0.0f, 5.0f);
+	camera_position = vec3(0.0f, 0.0f, 5.0f);
 	vec3 sphere_positions_world[] = {
 		vec3(-2.0, 0.0, 0.0),
 		vec3(2.0, 0.0, 0.0),

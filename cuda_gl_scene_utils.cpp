@@ -1,7 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
-
-#include <stb_image.h>
-
 #include <cuda_gl_scene_utils.h>
 
 bool camera_moved_ = false;
@@ -31,7 +27,6 @@ vec3 rotate_(0.0f, 0.0f, 0.0f);
 vec4 forward(0.0, 0.0, -1.0f, 0.0f);
 vec4 right(1.0, 0.0, 0.0f, 0.0f);
 vec4 up(0.0, 1.0, 0.0f, 0.0f);
-vec3 camera_position(0.0f, 0.0f, 5.0f);
 
 /* 
 Quaternion and versor operations taken from
