@@ -46,17 +46,14 @@
     <ClCompile Include="Common\utils\maths_funcs.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="cuda_gl_scene_utils.cpp" />
     <ClCompile Include="cuda_gl_setup_utils.cpp" />
     <ClCompile Include="Common\utils\obj_parser.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="cuda_gl_camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\cuda_gl_setup_utils.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cuda_gl_scene_utils.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="gl_scenes\cube_map.h">
@@ -67,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="gl_scenes\simple_triangle.h">
       <Filter>gl_scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cuda_gl_camera.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

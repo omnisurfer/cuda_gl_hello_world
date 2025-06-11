@@ -83,8 +83,8 @@
   <ItemGroup>
     <ClCompile Include="Common\utils\maths_funcs.cpp" />
     <ClCompile Include="Common\utils\obj_parser.cpp" />
+    <ClCompile Include="cuda_gl_camera.cpp" />
     <ClCompile Include="cuda_gl_hello_world.cpp" />
-    <ClCompile Include="cuda_gl_scene_utils.cpp" />
     <ClCompile Include="cuda_gl_setup_utils.cpp" />
     <ClCompile Include="gl.c" />
   </ItemGroup>
@@ -100,7 +100,7 @@
     <ClInclude Include="gl_scenes\cube_map.h" />
     <ClInclude Include="gl_scenes\quat_camera_spheres.h" />
     <ClInclude Include="gl_scenes\simple_triangle.h" />
-    <ClInclude Include="include\cuda_gl_scene_utils.h" />
+    <ClInclude Include="include\cuda_gl_camera.h" />
     <ClInclude Include="include\cuda_gl_setup_utils.h" />
   </ItemGroup>
   <ItemGroup>

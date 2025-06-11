@@ -36,8 +36,7 @@ bool BasicCUDAGLCamera::configure_camera(
 	float far_clipping_plane,
 	float field_of_view_degrees,
 	int viewport_width,
-	int viewport_height,
-	mat4* projection_matrix
+	int viewport_height	
 ) {
 
 	if (viewport_width == current_width && viewport_height == current_height) {
@@ -55,13 +54,12 @@ bool BasicCUDAGLCamera::configure_camera(
 	fovy = field_of_view_degrees;
 
 	height = viewport_height;
-	width = viewport_width;
-
-	proj_matrix = projection_matrix;
+	width = viewport_width;	
 
 	float aspect = float((float)width / (float)height); // aspect ratio
 
-	*proj_matrix = perspective(fovy, aspect, near, far);
+	// *proj_matrix = perspective(fovy, aspect, near, far);
+	projection_matrix = perspective(fovy, aspect, near, far);
 
 	return true;
 }
@@ -111,7 +109,7 @@ mat4 BasicCUDAGLCamera::move_camera() {
 	camera_position = camera_position + vec3(right) * move_.v[0];
 	mat4 T = translate(identity_mat4(), vec3(camera_position));
 
-	mat4 view_matrix = inverse(R) * inverse(T);
+	view_matrix = inverse(R) * inverse(T);
 
 	move_.v[0] = 0.0f;
 	move_.v[1] = 0.0f;
@@ -136,7 +134,12 @@ mat4 BasicCUDAGLCamera::move_camera(vec3 move, vec3 rotate) {
 }
 
 /* returns the view_matrix */
-mat4 BasicCUDAGLCamera::place_camera(vec3 camera_position, float camera_heading) {
+mat4 place_camera(vec3 cam_position, float cam_heading) {
+	mat4 view_matrix;
+	return view_matrix;
+}
+
+mat4 BasicCUDAGLCamera::place_camera() {
 
 	mat4 T = translate(identity_mat4(), vec3(-camera_position.v[0], -camera_position.v[1], -camera_position.v[2]));
 
@@ -146,7 +149,7 @@ mat4 BasicCUDAGLCamera::place_camera(vec3 camera_position, float camera_heading)
 	// convert the quaternion to a rotation matrix (just an array of 16 floats)
 	quat_to_mat4(R.m, quaternion);
 
-	mat4 view_matrix;
+	// mat4 view_matrix;
 	view_matrix = R * T;
 
 	return view_matrix;

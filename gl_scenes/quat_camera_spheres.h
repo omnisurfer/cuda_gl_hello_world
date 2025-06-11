@@ -6,7 +6,7 @@
 #include <fstream>
 
 #include <cuda_gl_setup_utils.h>
-#include <cuda_gl_scene_utils.h>
+// #include <cuda_gl_scene_utils.h>
 
 #include <cuda_gl_camera.h>
 
@@ -22,12 +22,12 @@ scene_mouse_button_callback_ptr scene_mouse_button_callback_function_ptr = nullp
 
 GLuint shader_program;
 
-mat4 view_matrix;
-mat4 projection_matrix;
+// mat4 view_matrix;
+// mat4 projection_matrix;
 
-int model_matrix_location;
-int view_matrix_location;
-int project_matrix_location;
+int model_matrix_location = 0;
+int view_matrix_location = 0;
+int project_matrix_location = 0;
 
 std::string vertex_shader_file_path;
 std::string frag_shader_file_path;
@@ -58,6 +58,8 @@ bool yaw_left = false;
 bool mouse_button_left = false;
 bool mouse_button_middle = false;
 bool mouse_button_right = false;
+
+BasicCUDAGLCamera camera;
 
 vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y) {
 
@@ -92,7 +94,7 @@ vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y)
 	}
 
 	// eye space
-	vec4 ray_eye_space = inverse(projection_matrix) * ray_clip_space;
+	vec4 ray_eye_space = inverse(camera.projection_matrix) * ray_clip_space;
 
 	if (false) {
 		printf("eye space pre %f %f %f %f\n",
@@ -115,7 +117,7 @@ vec3 get_ray_from_mouse_coords(GLFWwindow* window, float mouse_x, float mouse_y)
 	}
 
 	// world space
-	vec3 ray_world_space = vec3(inverse(view_matrix) * ray_eye_space);
+	vec3 ray_world_space = vec3(inverse(camera.view_matrix) * ray_eye_space);
 	
 	if (false) {
 		printf("world space raw %f %f %f\n",
@@ -278,15 +280,14 @@ void scene_key_callback_function(GLFWwindow* window, int key, int scancode, int 
 			);
 
 			if (shader_program > 0)
-			{
-				printf("USING NEW SHADER");
+			{				
 				glUseProgram(shader_program);
 				
 				if (shader_program > 0)
 				{
 					glUseProgram(shader_program);
-					glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
-					glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, projection_matrix.m);
+					glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
+					glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, camera.projection_matrix.m);
 				}
 			}
 		}
@@ -335,18 +336,84 @@ void scene_mouse_button_callback_function(GLFWwindow* window, int button, int ac
 	}
 }
 
-bool process_movements(float move_delta) {
+void process_movements(float move_delta) {
 
-	return false;
+	bool camera_moved = false;
+
+	if (true) {
+		if (move_left) {
+			camera_moved = true;
+			camera.move_camera_x(-move_delta);
+		}
+		if (move_right) {
+			camera_moved = true;
+			camera.move_camera_x(move_delta);
+		}
+		if (move_up) {
+			camera_moved = true;
+			camera.move_camera_y(-move_delta);
+		}
+		if (move_down) {
+			camera_moved = true;
+			camera.move_camera_y(move_delta);
+		}
+		if (move_forward) {
+			camera_moved = true;
+			camera.move_camera_z(-move_delta);
+		}
+		if (move_backward) {
+			camera_moved = true;
+			camera.move_camera_z(move_delta);
+		}
+
+		// ROTATIONS		
+		float rotation_delta = camera.camera_heading_speed * (float)delta_time;
+		if (roll_left) {
+			camera_moved = true;
+			camera.roll_camera(rotation_delta);
+		}
+		if (roll_right) {
+			camera_moved = true;
+			camera.roll_camera(-rotation_delta);
+		}
+		if (pitch_up) {
+			camera_moved = true;
+			camera.pitch_camera(rotation_delta);
+		}
+		if (pitch_down) {
+			camera_moved = true;
+			camera.pitch_camera(-rotation_delta);
+		}
+		if (yaw_left) {
+			camera_moved = true;
+			camera.yaw_camera(rotation_delta);
+		}
+		if (yaw_right) {
+			camera_moved = true;
+			camera.yaw_camera(-rotation_delta);
+		}		
+	}
+
+	if (camera_moved) {
+		camera.move_camera();
+		glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
+	}	
+}
+
+vec3 process_mouse(GLFWwindow* window) {
+		
+		double x_position, y_position;
+
+		glfwGetCursorPos(window, &x_position, &y_position);
+
+		// printf("x_pos %f y_pos %f\n", x_position, y_position);
+
+		return get_ray_from_mouse_coords(window, (float)x_position, (float)y_position);
 }
 
 /* From 06_vcam_with_quaternion */
 int draw_quat_cam_spheres(GLFWwindow* window) {
-
-	float camera_speed = 5.0f; // 1 unit per second?
-	float camera_heading_speed = 100.0f; //30 degrees per second
-	float camera_heading = 0.0f; // y-rotation in degrees
-
+	
 	scene_key_callback_function_ptr = scene_key_callback_function;
 	
 	if (scene_key_callback_function_ptr != nullptr) {
@@ -359,8 +426,6 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 		set_scene_mouse_button_callback_function(scene_mouse_button_callback_function_ptr);
 	}
 
-	/* create camera */	
-	camera_position = vec3(0.0f, 0.0f, 5.0f);
 	vec3 sphere_positions_world[] = {
 		vec3(-2.0, 0.0, 0.0),
 		vec3(2.0, 0.0, 0.0),
@@ -373,17 +438,20 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
 
-	configure_camera(
+	/* create camera */
+	camera.configure_camera(
 		0.1f,
 		100.0f,
 		67.0f,
 		window_width,
-		window_height,
-		&projection_matrix
+		window_height
 	);
+	
+	camera.init_camera();
 
-	init_camera();
-	view_matrix = place_camera(camera_position, camera_heading);
+	camera.camera_position = vec3(0.0f, 0.0f, 5.0f);
+
+	camera.place_camera();
 
 	/* create geometry */
 	GLfloat* vertex_points = NULL;
@@ -418,7 +486,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 
 	shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
 	model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
-	view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
+ 	view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
 	project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
 	int blue_frag_channel_location = glGetUniformLocation(shader_program, "blue_frag_channel");
 
@@ -430,8 +498,8 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	}	
 
 	glUseProgram(shader_program);
-	glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
-	glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, projection_matrix.m);
+	glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
+	glUniformMatrix4fv(project_matrix_location, 1, GL_FALSE, camera.projection_matrix.m);
 	
 	mat4 model_matrices[NUM_OF_SPHERS];
 	for (int i = 0; i < NUM_OF_SPHERS; i++) {
@@ -461,12 +529,9 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	int selected_sphere = -1;
 
 	while (!glfwWindowShouldClose(window))
-	{
-		bool camera_moved = false;
-		
+	{			
 		// Code to limit framerate
-		double now = glfwGetTime();
-		// double delta_time = now - last_update_time;
+		double now = glfwGetTime();		
 		delta_time = now - last_update_time;
 
 		if ((now - last_frame_time) >= fps_limit_period)
@@ -474,13 +539,12 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 			glfwGetWindowSize(window, &window_width, &window_height);
 			
 			if (true) {
-				configure_camera(
+				camera.configure_camera(
 					0.1f,
 					100.0f,
 					67.0f,
 					window_width,
-					window_height,
-					&projection_matrix
+					window_height					
 				);
 			}			
 			/* Check if window was resized */
@@ -520,70 +584,16 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 
 		/* Update camera outside FPS loop */
 		// TRANSLATIONS		
-		float move_delta = camera_speed * (float)delta_time;
+		float move_delta = camera.camera_speed * (float)delta_time;
+
+		process_movements(move_delta);
 		
 		if (true) {
-			if (move_left) {
-				camera_moved = true;
-				move_camera_x(-move_delta);
-			}
-			if (move_right) {
-				camera_moved = true;
-				move_camera_x(move_delta);
-			}
-			if (move_up) {
-				camera_moved = true;
-				move_camera_y(-move_delta);
-			}
-			if (move_down) {
-				camera_moved = true;
-				move_camera_y(move_delta);
-			}
-			if (move_forward) {
-				camera_moved = true;
-				move_camera_z(-move_delta);
-			}
-			if (move_backward) {
-				camera_moved = true;
-				move_camera_z(move_delta);
-			}
-
-			// ROTATIONS		
-			float rotation_delta = camera_heading_speed * (float)delta_time;
-			if (roll_left) {
-				camera_moved = true;
-				roll_camera(rotation_delta);
-			}
-			if (roll_right) {
-				camera_moved = true;
-				roll_camera(-rotation_delta);
-			}
-			if (pitch_up) {
-				camera_moved = true;
-				pitch_camera(rotation_delta);
-			}
-			if (pitch_down) {
-				camera_moved = true;
-				pitch_camera(-rotation_delta);
-			}
-			if (yaw_left) {
-				camera_moved = true;
-				yaw_camera(rotation_delta);
-			}
-			if (yaw_right) {
-				camera_moved = true;
-				yaw_camera(-rotation_delta);
-			}
-
+			
 			// MOUSE PROCESSING
 			if (mouse_button_left) {
-				double x_position, y_position;
-
-				glfwGetCursorPos(window, &x_position, &y_position);
-
-				// printf("x_pos %f y_pos %f\n", x_position, y_position);
-
-				vec3 ray_world = get_ray_from_mouse_coords(window, (float)x_position, (float)y_position);
+				
+				vec3 ray_world = process_mouse(window);
 
 				// sphere check
 				int closest_sphere_clicked = -1;
@@ -592,7 +602,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 				for (int i = 0; i < NUM_OF_SPHERS; i++) {
 					float t_distance = 0.0f;
 
-					if (ray_sphere_intersect(camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
+					if (ray_sphere_intersect(camera.camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
 
 						// only use cloest sphere
 						if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
@@ -604,11 +614,6 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 				selected_sphere = closest_sphere_clicked;
 				// printf("sphere %i was selected\n", selected_sphere);
 			}
-		}
-
-		if (camera_moved) {			
-			view_matrix = move_camera();
-			glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, view_matrix.m);
 		}
 		
 		last_update_time = now;

@@ -1,5 +1,13 @@
 #pragma once
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#include <stdio.h>
+#include <cmath>
+#include <maths_funcs.h>
+
 class BasicCUDAGLCamera {
 
 public:
@@ -9,10 +17,12 @@ public:
 	mat4 view_matrix;
 	mat4 projection_matrix;
 
-	int view_matrix_location;
-	int project_matrix_location;
+	int view_matrix_location = 0;
+	int project_matrix_location = 0;
 
 	vec3 camera_position;
+
+	bool camera_moved_ = false;
 
 	int width = 1024;
 	int height = 768;
@@ -28,7 +38,7 @@ public:
 	float camera_heading_speed = 100.0f; //30 degrees per second
 	float camera_heading = 0.0f; // y-rotation in degrees
 
-	float quaternion[4];
+	float quaternion[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	mat4* proj_matrix = NULL;
 	mat4 R;
@@ -41,6 +51,9 @@ public:
 	vec4 up;
 
 public:
+	BasicCUDAGLCamera() {
+		printf("starting cmaera\n");
+	}
 	void init_camera();
 
 	bool configure_camera(
@@ -48,8 +61,7 @@ public:
 		float far_clipping_plane,
 		float field_of_view_degrees,
 		int viewport_width,
-		int viewport_heigth,
-		mat4* projection_matrix
+		int viewport_heigth
 	);
 
 	void move_camera_x(float move_x);
@@ -63,6 +75,7 @@ public:
 	mat4 move_camera();
 	mat4 move_camera(vec3 move, vec3 rotate);
 
+	mat4 place_camera();
 	mat4 place_camera(vec3 cam_position, float cam_heading);
 
 private:
@@ -74,7 +87,7 @@ private:
 
 	/* create a unit quaternion q from an angle in degrees a, and an axis x,y,z */
 	void create_versor(float* q, float degrees, float x, float y, float z) {
-		float radian = ONE_DEG_IN_RAD * degrees;
+		float radian = float(ONE_DEG_IN_RAD * degrees);
 		q[0] = cosf(radian / 2.0f);
 		q[1] = sinf(radian / 2.0f) * x;
 		q[2] = sinf(radian / 2.0f) * y;

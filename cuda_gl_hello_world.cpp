@@ -27,7 +27,8 @@
 #include <maths_funcs.h>
 #include <obj_parser.h>
 
-#include <cuda_gl_scene_utils.h>
+// #include <cuda_gl_scene_utils.h>
+#include <cuda_gl_camera.h>
 #include <cuda_gl_setup_utils.h>
 
 // scenes from the book
