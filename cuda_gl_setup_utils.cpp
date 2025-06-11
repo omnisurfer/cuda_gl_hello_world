@@ -50,10 +50,6 @@ GLFWwindow* init_gl(int window_width, int window_height) {
 	printf("%s\n", glGetString(GL_VERSION));
 	printf("%s\n", glGetString(GL_RENDERER));
 
-	// Create callback for key presses and mouse
-	glfwSetKeyCallback(window, gl_key_callback);
-	glfwSetMouseButtonCallback(window, gl_mouse_button_callback);	
-
 	glfwSetWindowAspectRatio(window, window_width, window_height);
 
 	// center the window
@@ -63,37 +59,6 @@ GLFWwindow* init_gl(int window_width, int window_height) {
 	glfwSetWindowPos(window, (vid_mode->width - window_width) / 2, (vid_mode->height - window_height) / 2);
 
 	return window;
-}
-
-void set_scene_key_callback_function(scene_key_callback_ptr scene_key_callback) {
-
-	if (scene_key_callback != nullptr) {
-		scene_key_callback_function = scene_key_callback;
-	}
-}
-
-void set_scene_mouse_button_callback_function(scene_mouse_button_callback_ptr scene_mouse_callback) {
-
-	if (scene_mouse_callback != nullptr) {
-		scene_mouse_button_callback_function = scene_mouse_callback;
-	}
-}
-
-void gl_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-
-	if (scene_key_callback_function != nullptr) {
-		scene_key_callback_function(window, key, scancode, action, mods);
-	}
-}
-
-void gl_mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-
-	if (scene_mouse_button_callback_function != nullptr) {
-		scene_mouse_button_callback_function(window, button, action, mods);
-	}
 }
 
 void error_callback_glfw(int error, const char* description) {

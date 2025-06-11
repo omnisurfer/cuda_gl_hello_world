@@ -20,17 +20,6 @@
 #include <vector>
 #include <assert.h>
 
-// Utils
-#include <stb_image.h>
-
-// Anton's OpenGL Tutorial Includes
-#include <maths_funcs.h>
-#include <obj_parser.h>
-
-// #include <cuda_gl_scene_utils.h>
-#include <cuda_gl_camera.h>
-#include <cuda_gl_setup_utils.h>
-
 // scenes from the book
 #include "simple_triangle.h"
 #include "quat_camera_spheres.h"

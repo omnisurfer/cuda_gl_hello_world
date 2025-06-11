@@ -6,9 +6,14 @@
 
 #include <stdio.h>
 #include <cmath>
+
+#include <GLFW/glfw3.h>
+
 #include <maths_funcs.h>
 
-class BasicCUDAGLCamera {
+
+
+class CUDAGLCamera {
 
 public:
 
@@ -50,11 +55,43 @@ public:
 	vec4 right;
 	vec4 up;
 
+	double now = 0.0f;
+	const double fps_limit_frequency = 60.0;
+	const double fps_limit_period = 1 / fps_limit_frequency;
+	double last_update_time = 0;
+	double last_frame_time = 0;
+
+
 public:
-	BasicCUDAGLCamera() {
+	CUDAGLCamera() {
 		printf("starting cmaera\n");
 	}
 	void init_camera();
+
+	bool update_frame(GLFWwindow *window) {
+
+		bool update_frame = false;
+		double fps = 0.0f;
+		char temp[256];
+
+		now = glfwGetTime();
+		delta_time = now - last_update_time;
+
+		if ((now - last_frame_time) >= fps_limit_period) {
+
+			fps = 1 / (now - last_frame_time);			
+			sprintf_s(temp, "FPS %.2lf, delta %f", fps, delta_time);
+			glfwSetWindowTitle(window, temp);
+
+			update_frame = true;
+
+			last_frame_time = now;
+		}
+		
+		last_update_time = now;
+		
+		return update_frame;
+	}
 
 	bool configure_camera(
 		float near_clipping_plane,
@@ -76,7 +113,7 @@ public:
 	mat4 move_camera(vec3 move, vec3 rotate);
 
 	mat4 place_camera();
-	mat4 place_camera(vec3 cam_position, float cam_heading);
+	// mat4 place_camera(vec3 cam_position, float cam_heading);
 
 private:
 	/*

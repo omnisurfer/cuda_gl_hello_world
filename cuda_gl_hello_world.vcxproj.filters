@@ -51,6 +51,7 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="cuda_gl_camera.cpp" />
+    <ClCompile Include="cuda_gl_user_input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\cuda_gl_setup_utils.h">
@@ -66,6 +67,9 @@
       <Filter>gl_scenes</Filter>
     </ClInclude>
     <ClInclude Include="include\cuda_gl_camera.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cuda_gl_user_input.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

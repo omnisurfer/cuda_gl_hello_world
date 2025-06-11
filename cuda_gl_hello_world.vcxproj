@@ -86,6 +86,7 @@
     <ClCompile Include="cuda_gl_camera.cpp" />
     <ClCompile Include="cuda_gl_hello_world.cpp" />
     <ClCompile Include="cuda_gl_setup_utils.cpp" />
+    <ClCompile Include="cuda_gl_user_input.cpp" />
     <ClCompile Include="gl.c" />
   </ItemGroup>
   <ItemGroup>
@@ -102,6 +103,7 @@
     <ClInclude Include="gl_scenes\simple_triangle.h" />
     <ClInclude Include="include\cuda_gl_camera.h" />
     <ClInclude Include="include\cuda_gl_setup_utils.h" />
+    <ClInclude Include="include\cuda_gl_user_input.h" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="3d_objects\sphere.obj">

@@ -1,37 +1,37 @@
 #include <cuda_gl_camera.h>
 
-void BasicCUDAGLCamera::move_camera_x(float move_x) {
+void CUDAGLCamera::move_camera_x(float move_x) {
 	move_.v[0] = move_x;
 	camera_moved_ = true;
 }
-void BasicCUDAGLCamera::move_camera_y(float move_y) {
+void CUDAGLCamera::move_camera_y(float move_y) {
 	move_.v[1] = move_y;
 	camera_moved_ = true;
 }
-void BasicCUDAGLCamera::move_camera_z(float move_z) {
+void CUDAGLCamera::move_camera_z(float move_z) {
 	move_.v[2] = move_z;
 	camera_moved_ = true;
 }
 
-void BasicCUDAGLCamera::roll_camera(float roll) {
+void CUDAGLCamera::roll_camera(float roll) {
 	rotate_.v[0] = roll;
 	camera_moved_ = true;
 }
-void BasicCUDAGLCamera::pitch_camera(float pitch) {
+void CUDAGLCamera::pitch_camera(float pitch) {
 	rotate_.v[1] = pitch;
 	camera_moved_ = true;
 }
-void BasicCUDAGLCamera::yaw_camera(float yaw) {
+void CUDAGLCamera::yaw_camera(float yaw) {
 	rotate_.v[2] = yaw;
 	camera_moved_ = true;
 }
 
-void BasicCUDAGLCamera::init_camera() {
+void CUDAGLCamera::init_camera() {
 	create_versor(quaternion, -camera_heading, 0.0f, 1.0f, 0.0f);
 	quat_to_mat4(R.m, quaternion);
 }
 
-bool BasicCUDAGLCamera::configure_camera(
+bool CUDAGLCamera::configure_camera(
 	float near_clipping_plane,
 	float far_clipping_plane,
 	float field_of_view_degrees,
@@ -64,7 +64,7 @@ bool BasicCUDAGLCamera::configure_camera(
 	return true;
 }
 
-mat4 BasicCUDAGLCamera::move_camera() {
+mat4 CUDAGLCamera::move_camera() {
 
 	// process roll
 	if (true) {
@@ -123,7 +123,7 @@ mat4 BasicCUDAGLCamera::move_camera() {
 
 }
 
-mat4 BasicCUDAGLCamera::move_camera(vec3 move, vec3 rotate) {
+mat4 CUDAGLCamera::move_camera(vec3 move, vec3 rotate) {
 
 	move_ = move;
 	rotate_ = rotate;
@@ -139,7 +139,7 @@ mat4 place_camera(vec3 cam_position, float cam_heading) {
 	return view_matrix;
 }
 
-mat4 BasicCUDAGLCamera::place_camera() {
+mat4 CUDAGLCamera::place_camera() {
 
 	mat4 T = translate(identity_mat4(), vec3(-camera_position.v[0], -camera_position.v[1], -camera_position.v[2]));
 
