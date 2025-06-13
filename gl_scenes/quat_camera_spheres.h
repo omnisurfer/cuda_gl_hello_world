@@ -5,10 +5,10 @@
 
 #include <fstream>
 
-#include <cuda_gl_setup_utils.h>
-
 #include <cuda_gl_camera.h>
 #include <cuda_gl_user_input.h>
+#include <cuda_gl_setup_utils.h>
+#include <cuda_gl_common.h>
 
 #define SPHERE_VERTEX_SHADER_FILE "quat_camera_shader.vert"
 #define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"
@@ -17,15 +17,15 @@
 
 #define NUM_OF_SPHERS 4
 
+/*
 GLuint shader_program;
 
 std::string vertex_shader_file_path;
 std::string frag_shader_file_path;
+*/
 
-int model_matrix_location = 0;
-
-CUDAGLCamera camera;
-CUDAGLUserInput user_input;
+CUDAGLCamera sphere_camera;
+CUDAGLUserInput sphere_user_input;
 
 /* taken from 07_ray_picking */
 bool ray_sphere_intersect(vec3 ray_origin_world, vec3 ray_direction_world, vec3 sphere_center_world, float sphere_radius, float* intersection_distance) {
@@ -73,35 +73,19 @@ bool ray_sphere_intersect(vec3 ray_origin_world, vec3 ray_direction_world, vec3 
 	return false;
 }
 
-void update_shaders() {
-
-	glDeleteProgram(shader_program);
-
-	shader_program = compile_and_link_shader_program_from_files(
-		vertex_shader_file_path.c_str(), 
-		frag_shader_file_path.c_str()
-	);
-
-	if (shader_program > 0) {
-		glUseProgram(shader_program);
-		glUniformMatrix4fv(camera.view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
-		glUniformMatrix4fv(camera.project_matrix_location, 1, GL_FALSE, camera.projection_matrix.m);
-	}
-}
-
 /* From 06_vcam_with_quaternion */
-int draw_quat_cam_spheres(GLFWwindow* window) {
+int draw_quat_cam_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
 
 	/* user input */
-	user_input.init_cuda_gl_user_input(window);
+	sphere_user_input.init_cuda_gl_user_input(window);
 
 	/* create camera */
-	camera.init_camera();
+	sphere_camera.init_camera();
 
-	camera.configure_camera(
+	sphere_camera.configure_camera(
 		0.1f,
 		100.0f,
 		67.0f,
@@ -109,7 +93,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 		window_height
 	);
 
-	camera.place_camera(vec3(0.0f, 0.0f, 5.0f));
+	sphere_camera.place_camera(vec3(0.0f, 0.0f, 5.0f));
 
 	/* load up spheres */
 	vec3 sphere_positions_world[] = {
@@ -122,6 +106,8 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	const float sphere_radius = 1.0f;
 		
 	/* create geometry */
+	int model_matrix_location = 0;
+
 	GLfloat* vertex_points = NULL;
 	GLfloat* vertex_normals = NULL;
 	GLfloat* texture_coordinates = NULL;
@@ -146,28 +132,30 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	}
 
 	/* create shaders */
-	vertex_shader_file_path = SHADER_DIRECTORY;
-	vertex_shader_file_path.append(SPHERE_VERTEX_SHADER_FILE);
+	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
+	cuda_gl_common->vertex_shader_file_path.append(SPHERE_VERTEX_SHADER_FILE);
 
-	frag_shader_file_path = SHADER_DIRECTORY;
-	frag_shader_file_path.append(SPHERE_FRAGMENT_SHADER_FILE);
+	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
+	cuda_gl_common->frag_shader_file_path.append(SPHERE_FRAGMENT_SHADER_FILE);
 
-	shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());	
- 	camera.view_matrix_location = glGetUniformLocation(shader_program, "view_matrix");
-	camera.project_matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
-	model_matrix_location = glGetUniformLocation(shader_program, "model_matrix");
-	int blue_frag_channel_location = glGetUniformLocation(shader_program, "blue_frag_channel");
+	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
 
-	if (shader_program <= 0)
+ 	sphere_camera.view_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
+	sphere_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
+	
+	model_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
+	int blue_frag_channel_location = glGetUniformLocation(cuda_gl_common->shader_program, "blue_frag_channel");
+
+	if (cuda_gl_common->shader_program <= 0)
 	{	
 		fprintf(stderr, "ERROR: could not compile shader_program.");
 		glfwTerminate();
 		return 0;
 	}	
 
-	glUseProgram(shader_program);
-	glUniformMatrix4fv(camera.view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
-	glUniformMatrix4fv(camera.project_matrix_location, 1, GL_FALSE, camera.projection_matrix.m);
+	glUseProgram(cuda_gl_common->shader_program);
+	glUniformMatrix4fv(sphere_camera.view_matrix_location, 1, GL_FALSE, sphere_camera.view_matrix.m);
+	glUniformMatrix4fv(sphere_camera.project_matrix_location, 1, GL_FALSE, sphere_camera.projection_matrix.m);
 	
 	mat4 model_matrices[NUM_OF_SPHERS];
 	for (int i = 0; i < NUM_OF_SPHERS; i++) {
@@ -192,19 +180,19 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 
 	while (!glfwWindowShouldClose(window))
 	{					
-		if (camera.update_frame(window))
+		if (sphere_camera.update_frame(window))
 		{
 			glfwGetWindowSize(window, &window_width, &window_height);
 
 			/* Check if window was resized */
-			camera.configure_camera(window_width, window_height);						
+			sphere_camera.configure_camera(window_width, window_height);						
 			
 			/* Clear the drawing sruface */
 			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);		
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 						
-			glUseProgram(shader_program);
+			glUseProgram(cuda_gl_common->shader_program);
 
 			// color selected spheres
 			for (int i = 0; i < NUM_OF_SPHERS; i++) {
@@ -226,13 +214,13 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 
 		/* Update camera outside FPS loop */
 		// TRANSLATIONS			
-		user_input.process_movements(&camera);
+		sphere_user_input.process_movements(&sphere_camera);
 				
 		// MOUSE PROCESSING
-		if (user_input.mouse_button_left) {
+		if (sphere_user_input.mouse_button_left) {
 				
 			// vec3 ray_world = process_mouse(window);
-			vec3 ray_world = user_input.process_mouse(window, &camera);
+			vec3 ray_world = sphere_user_input.process_mouse(window, &sphere_camera);
 
 			// sphere check
 			int closest_sphere_clicked = -1;
@@ -241,7 +229,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 			for (int i = 0; i < NUM_OF_SPHERS; i++) {
 				float t_distance = 0.0f;
 
-				if (ray_sphere_intersect(camera.camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
+				if (ray_sphere_intersect(sphere_camera.camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
 
 					// only use cloest sphere
 					if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
@@ -255,8 +243,8 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 		}
 
 		// PROCESS SHADER RELOAD
-		if (user_input.reload_shader_key_pressed) {
-			update_shaders();
+		if (sphere_user_input.reload_shader_key_pressed) {
+			cuda_gl_common->update_shaders(sphere_camera);
 		}
 
 		/* Poll for and process events */

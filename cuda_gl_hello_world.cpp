@@ -20,13 +20,18 @@
 #include <vector>
 #include <assert.h>
 
-// scenes from the book
-#include "simple_triangle.h"
-#include "quat_camera_spheres.h"
-#include "cube_map.h"
+// #include <cuda_gl_setup_utils.h>
+#include <cuda_gl_common.h>
 
-#define DISPLAY_HEIGHT 1080
+// scenes from the book
+// #include "base_scene_template.h"
+
+// #include "simple_triangle.h"
+#include "quat_camera_spheres.h"
+// #include "cube_map.h"
+
 #define DISPLAY_WIDTH 1920
+#define DISPLAY_HEIGHT 1080
 
 // CUDA externs
 extern "C" int execute_kernel();
@@ -35,7 +40,9 @@ extern "C" int execute_kernel();
 // TBD
 
 int main(int arc, char** argvv) {
-	GLFWwindow* window;
+	GLFWwindow* window = NULL;
+
+	CUDAGLCommon cuda_gl_common;
 
 	printf("Starting cuda_gl_hello_world\n");
 
@@ -44,7 +51,7 @@ int main(int arc, char** argvv) {
 	}
 	
 	if (true) {
-		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
 		{
@@ -52,31 +59,32 @@ int main(int arc, char** argvv) {
 			return -1;
 		}
 
-		draw_quat_cam_spheres(window);
+		draw_quat_cam_spheres(window, &cuda_gl_common);
 	}
 
-	if (true) {
+	if (false) {
 
-		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
 		{
 			printf("Failed to create Open GL window");
 			return -1;
 		}		
-		draw_simple_triangle(window);
+
+		// draw_simple_triangle(window, &cuda_gl_common);
 	}
 
 	if (false) {
 
-		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+		// window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
 		{
 			printf("Failed to create Open GL window");
 			return -1;
 		}
-		draw_cube_map(window);
+		// draw_cube_map(window);
 	}
 
 	return 0;
