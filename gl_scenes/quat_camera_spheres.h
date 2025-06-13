@@ -99,6 +99,8 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 	user_input.init_cuda_gl_user_input(window);
 
 	/* create camera */
+	camera.init_camera();
+
 	camera.configure_camera(
 		0.1f,
 		100.0f,
@@ -107,11 +109,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 		window_height
 	);
 
-	camera.init_camera();
-
-	camera.camera_position = vec3(0.0f, 0.0f, 5.0f);
-
-	camera.place_camera();
+	camera.place_camera(vec3(0.0f, 0.0f, 5.0f));
 
 	/* load up spheres */
 	vec3 sphere_positions_world[] = {
@@ -199,13 +197,7 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 			glfwGetWindowSize(window, &window_width, &window_height);
 
 			/* Check if window was resized */
-			camera.configure_camera(
-				0.1f,
-				100.0f,
-				67.0f,
-				window_width,
-				window_height					
-			);
+			camera.configure_camera(window_width, window_height);						
 			
 			/* Clear the drawing sruface */
 			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);		
@@ -213,9 +205,10 @@ int draw_quat_cam_spheres(GLFWwindow* window) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 						
 			glUseProgram(shader_program);
-			for (int i = 0; i < NUM_OF_SPHERS; i++) {
 
-				// color selected spheres
+			// color selected spheres
+			for (int i = 0; i < NUM_OF_SPHERS; i++) {
+				
 				if (selected_sphere == i) {					
 					glUniform1f(blue_frag_channel_location, 1.0f);					
 				}

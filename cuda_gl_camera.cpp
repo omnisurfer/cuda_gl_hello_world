@@ -31,6 +31,11 @@ void CUDAGLCamera::init_camera() {
 	quat_to_mat4(R.m, quaternion);
 }
 
+bool CUDAGLCamera::configure_camera(int viewport_width, int viewport_height) {
+
+	return configure_camera(near, far, fovy, viewport_width, viewport_height);
+}
+
 bool CUDAGLCamera::configure_camera(
 	float near_clipping_plane,
 	float far_clipping_plane,
@@ -134,12 +139,9 @@ mat4 CUDAGLCamera::move_camera(vec3 move, vec3 rotate) {
 }
 
 /* returns the view_matrix */
-mat4 place_camera(vec3 cam_position, float cam_heading) {
-	mat4 view_matrix;
-	return view_matrix;
-}
+mat4 CUDAGLCamera::place_camera(vec3 position) {
 
-mat4 CUDAGLCamera::place_camera() {
+	camera_position = position;
 
 	mat4 T = translate(identity_mat4(), vec3(-camera_position.v[0], -camera_position.v[1], -camera_position.v[2]));
 

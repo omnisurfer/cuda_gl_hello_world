@@ -55,7 +55,7 @@ int main(int arc, char** argvv) {
 		draw_quat_cam_spheres(window);
 	}
 
-	if (false) {
+	if (true) {
 
 		window = init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

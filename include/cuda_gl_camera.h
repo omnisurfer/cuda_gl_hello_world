@@ -93,6 +93,8 @@ public:
 		return update_frame;
 	}
 
+	bool configure_camera(int viewport_width, int viewport_height);
+
 	bool configure_camera(
 		float near_clipping_plane,
 		float far_clipping_plane,
@@ -112,8 +114,7 @@ public:
 	mat4 move_camera();
 	mat4 move_camera(vec3 move, vec3 rotate);
 
-	mat4 place_camera();
-	// mat4 place_camera(vec3 cam_position, float cam_heading);
+	mat4 place_camera(vec3 position);
 
 private:
 	/*
