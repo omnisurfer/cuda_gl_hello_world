@@ -1,13 +1,10 @@
-#include <cuda_gl_setup_utils.h>
+#include <cuda_gl_common.h>
 
-scene_key_callback_ptr scene_key_callback_function = nullptr;
-scene_mouse_button_callback_ptr scene_mouse_button_callback_function = nullptr;
-
-GLFWwindow* init_gl(int window_width, int window_height) {
+GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {
 
 	printf("GLFW %s\n", glfwGetVersionString());
 
-	glfwSetErrorCallback(error_callback_glfw);
+	glfwSetErrorCallback(CUDAGLCommon::error_callback_glfw);
 
 	GLFWwindow* window;
 
@@ -55,17 +52,29 @@ GLFWwindow* init_gl(int window_width, int window_height) {
 	// center the window
 	GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* vid_mode = glfwGetVideoMode(primary_monitor);
-	
+
 	glfwSetWindowPos(window, (vid_mode->width - window_width) / 2, (vid_mode->height - window_height) / 2);
 
 	return window;
 }
 
-void error_callback_glfw(int error, const char* description) {
-	fprintf(stderr, "GLFW ERROR: code %i msg: %s\n", error, description);
+void CUDAGLCommon::update_shaders(CUDAGLCamera camera) {
+
+	glDeleteProgram(shader_program);
+
+	shader_program = compile_and_link_shader_program_from_files(
+		vertex_shader_file_path.c_str(),
+		frag_shader_file_path.c_str()
+	);
+
+	if (shader_program > 0) {
+		glUseProgram(shader_program);
+		glUniformMatrix4fv(camera.view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
+		glUniformMatrix4fv(camera.project_matrix_location, 1, GL_FALSE, camera.projection_matrix.m);
+	}
 }
 
-GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_filename, const char* fragment_shader_filename) {
+GLuint CUDAGLCommon::compile_and_link_shader_program_from_files(const char* vertex_shader_filename, const char* fragment_shader_filename) {
 
 	// read in the triangle shaders	
 	std::ifstream input;
