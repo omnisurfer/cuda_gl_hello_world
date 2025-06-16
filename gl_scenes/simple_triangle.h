@@ -1,15 +1,16 @@
 #pragma once
 
-#include <cuda_gl_setup_utils.h>
-// #include <cuda_gl_scene_utils.h>
+#include <fstream>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <fstream>
+#include <cuda_gl_common.h>
 
 /* https://antongerdelan.net/opengl/hellotriangle.html */
-int draw_simple_triangle(GLFWwindow* window) {
+int draw_simple_triangle(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
+
+
 
 	/* Render a triangle */
 	/**/
@@ -93,14 +94,14 @@ int draw_simple_triangle(GLFWwindow* window) {
 	std::string frag_shader_file_path = SHADER_DIRECTORY;
 	frag_shader_file_path.append("triangle_shader.frag");
 
-	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
+	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());
 
-	int translation_matrix_location = glGetUniformLocation(shader_program, "translation_matrix");
-	int rotation_matrix_location = glGetUniformLocation(shader_program, "rotation_matrix");
+	int translation_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "translation_matrix");
+	int rotation_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "rotation_matrix");
 
-	if (shader_program > 0)
+	if (cuda_gl_common->shader_program > 0)
 	{
-		glUseProgram(shader_program);
+		glUseProgram(cuda_gl_common->shader_program);
 		glBindVertexArray(triangle_vao);
 	}
 	else {

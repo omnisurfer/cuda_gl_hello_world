@@ -8,6 +8,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <cuda_gl_common.h>
+
 #define CUBE_VERTEX_SHADER_FILE "cube_shader.vert"
 #define CUBE_FRAGMENT_SHADER_FILE "cube_shader.frag"
 
@@ -82,7 +84,7 @@ void create_cube_map(
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-int draw_cube_map(GLFWwindow* window) {
+int draw_cube_map(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	GLfloat cube_points[] = {
 		-10.0f,  10.0f, -10.0f,
@@ -167,15 +169,15 @@ int draw_cube_map(GLFWwindow* window) {
 	std::string frag_shader_file_path = SHADER_DIRECTORY;
 	frag_shader_file_path.append(CUBE_FRAGMENT_SHADER_FILE);
 
-	GLuint shader_program = compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());	
+	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(vertex_shader_file_path.c_str(), frag_shader_file_path.c_str());	
 
-	if (shader_program > 0)
+	if (cuda_gl_common->shader_program > 0)
 	{
-		glUseProgram(shader_program);
+		glUseProgram(cuda_gl_common->shader_program);
 		glBindVertexArray(cube_vao);
 	}
 
-	glUseProgram(shader_program);
+	glUseProgram(cuda_gl_common->shader_program);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, dummy_texture_cube);
 	glBindVertexArray(cube_vao);
