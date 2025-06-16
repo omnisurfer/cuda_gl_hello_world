@@ -24,7 +24,7 @@
 #include <cuda_gl_common.h>
 
 // scenes from the book
-// #include "base_scene_template.h"
+#include "template_scene.h"
 
 // #include "simple_triangle.h"
 #include "quat_camera_spheres.h"
@@ -49,6 +49,18 @@ int main(int arc, char** argvv) {
 	if (true) {
 		execute_kernel();
 	}
+
+	if (true) {
+		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+		if (!window)
+		{
+			printf("Failed to create Open GL window");
+			return -1;
+		}
+
+		draw_template_scene(window, &cuda_gl_common);
+	}
 	
 	if (true) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -59,9 +71,9 @@ int main(int arc, char** argvv) {
 			return -1;
 		}
 
-		draw_quat_cam_spheres(window, &cuda_gl_common);
+		draw_quat_cam_spheres(window, &cuda_gl_common);		
 	}
-
+	
 	if (false) {
 
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);

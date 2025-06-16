@@ -7,22 +7,14 @@
 
 #include <cuda_gl_camera.h>
 #include <cuda_gl_user_input.h>
-#include <cuda_gl_setup_utils.h>
 #include <cuda_gl_common.h>
 
 #define SPHERE_VERTEX_SHADER_FILE "quat_camera_shader.vert"
 #define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"
 
-#define MESH_FILE "3d_objects/sphere.obj"
+#define SPHERE_MESH_FILE "3d_objects/sphere.obj"
 
-#define NUM_OF_SPHERS 4
-
-/*
-GLuint shader_program;
-
-std::string vertex_shader_file_path;
-std::string frag_shader_file_path;
-*/
+#define SPHERE_NUM_OF_SPHERS 4
 
 CUDAGLCamera sphere_camera;
 CUDAGLUserInput sphere_user_input;
@@ -114,7 +106,7 @@ int draw_quat_cam_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	int point_count = 0;
 
 	std::string mesh_file_path = ASSETS_DIRECTORY;
-	mesh_file_path.append(MESH_FILE);
+	mesh_file_path.append(SPHERE_MESH_FILE);
 
 	load_obj_file(mesh_file_path.c_str(), vertex_points, texture_coordinates, vertex_normals, point_count);
 
@@ -157,8 +149,8 @@ int draw_quat_cam_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	glUniformMatrix4fv(sphere_camera.view_matrix_location, 1, GL_FALSE, sphere_camera.view_matrix.m);
 	glUniformMatrix4fv(sphere_camera.project_matrix_location, 1, GL_FALSE, sphere_camera.projection_matrix.m);
 	
-	mat4 model_matrices[NUM_OF_SPHERS];
-	for (int i = 0; i < NUM_OF_SPHERS; i++) {
+	mat4 model_matrices[SPHERE_NUM_OF_SPHERS];
+	for (int i = 0; i < SPHERE_NUM_OF_SPHERS; i++) {
 		model_matrices[i] = translate(identity_mat4(), sphere_positions_world[i]);
 	}
 
@@ -195,7 +187,7 @@ int draw_quat_cam_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			glUseProgram(cuda_gl_common->shader_program);
 
 			// color selected spheres
-			for (int i = 0; i < NUM_OF_SPHERS; i++) {
+			for (int i = 0; i < SPHERE_NUM_OF_SPHERS; i++) {
 				
 				if (selected_sphere == i) {					
 					glUniform1f(blue_frag_channel_location, 1.0f);					
@@ -226,7 +218,7 @@ int draw_quat_cam_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			int closest_sphere_clicked = -1;
 			float closest_intersection = 0.0f;
 
-			for (int i = 0; i < NUM_OF_SPHERS; i++) {
+			for (int i = 0; i < SPHERE_NUM_OF_SPHERS; i++) {
 				float t_distance = 0.0f;
 
 				if (ray_sphere_intersect(sphere_camera.camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {

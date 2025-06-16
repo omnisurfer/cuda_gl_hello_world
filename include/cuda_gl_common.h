@@ -12,7 +12,13 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+#include <obj_parser.h>
+
 #include <cuda_gl_camera.h>
+
+#define SHADER_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/shaders/"
+#define ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/assets/"
+#define THIRD_PARTY_ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/Common/assets/"
 
 class CUDAGLCommon {
 

@@ -5,49 +5,22 @@
 
 #include <fstream>
 
-#include <cuda_gl_setup_utils.h>
 #include <cuda_gl_camera.h>
 #include <cuda_gl_user_input.h>
 #include <cuda_gl_common.h>
 
-#define SPHERE_VERTEX_SHADER_FILE "quat_camera_shader.vert"
-#define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"
+#define TEMPLATE_VERTEX_SHADER_FILE "template_shader.vert"
+#define TEMPLATE_FRAGMENT_SHADER_FILE "template_shader.frag"
 
-#define MESH_FILE "3d_objects/sphere.obj"
+#define TEMPLATE_MESH_FILE "3d_objects/sphere.obj"
 
-#define NUM_OF_SPHERS 4
-
-/*
-GLuint shader_program;
-
-std::string vertex_shader_file_path;
-std::string frag_shader_file_path;
-*/
+#define TEMPLATE_NUM_OF_SPHERS 4
 
 CUDAGLCamera base_temp_camera;
 CUDAGLUserInput base_temp_user_input;
-CUDAGLCommon base_temp_common;
-
-/*
-void update_shaders() {
-
-	glDeleteProgram(shader_program);
-
-	shader_program = compile_and_link_shader_program_from_files(
-		vertex_shader_file_path.c_str(), 
-		frag_shader_file_path.c_str()
-	);
-
-	if (shader_program > 0) {
-		glUseProgram(shader_program);
-		glUniformMatrix4fv(camera.view_matrix_location, 1, GL_FALSE, camera.view_matrix.m);
-		glUniformMatrix4fv(camera.project_matrix_location, 1, GL_FALSE, camera.projection_matrix.m);
-	}
-}
-*/
 
 /* Scene template derived from 06_vcam_with_quaternion */
-int base_scene_template(GLFWwindow* window) {
+int draw_template_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
@@ -75,9 +48,7 @@ int base_scene_template(GLFWwindow* window) {
 		vec3(-2.0, 0.0, -2.0),
 		vec3(1.5, 1.0, -1.0),
 	};
-
-	const float sphere_radius = 1.0f;
-		
+	
 	/* create geometry */
 	int model_matrix_location = 0;
 
@@ -87,7 +58,7 @@ int base_scene_template(GLFWwindow* window) {
 	int point_count = 0;
 
 	std::string mesh_file_path = ASSETS_DIRECTORY;
-	mesh_file_path.append(MESH_FILE);
+	mesh_file_path.append(TEMPLATE_MESH_FILE);
 
 	load_obj_file(mesh_file_path.c_str(), vertex_points, texture_coordinates, vertex_normals, point_count);
 
@@ -105,30 +76,31 @@ int base_scene_template(GLFWwindow* window) {
 	}
 
 	/* create shaders */
-	base_temp_common.vertex_shader_file_path = SHADER_DIRECTORY;
-	base_temp_common.vertex_shader_file_path.append(SPHERE_VERTEX_SHADER_FILE);
+	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
+	cuda_gl_common->vertex_shader_file_path.append(TEMPLATE_VERTEX_SHADER_FILE);
 
-	base_temp_common.frag_shader_file_path = SHADER_DIRECTORY;
-	base_temp_common.frag_shader_file_path.append(SPHERE_FRAGMENT_SHADER_FILE);
+	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
+	cuda_gl_common->frag_shader_file_path.append(TEMPLATE_FRAGMENT_SHADER_FILE);
 
-	base_temp_common.shader_program = compile_and_link_shader_program_from_files(base_temp_common.vertex_shader_file_path.c_str(), base_temp_common.frag_shader_file_path.c_str());
- 	base_temp_camera.view_matrix_location = glGetUniformLocation(base_temp_common.shader_program, "view_matrix");
-	base_temp_camera.project_matrix_location = glGetUniformLocation(base_temp_common.shader_program, "projection_matrix");
-	model_matrix_location = glGetUniformLocation(base_temp_common.shader_program, "model_matrix");
+	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
+	
+	base_temp_camera.view_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
+	base_temp_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
+	model_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
 
-	if (base_temp_common.shader_program <= 0)
+	if (cuda_gl_common->shader_program <= 0)
 	{	
 		fprintf(stderr, "ERROR: could not compile shader_program.");
 		glfwTerminate();
 		return 0;
 	}	
 
-	glUseProgram(base_temp_common.shader_program);
+	glUseProgram(cuda_gl_common->shader_program);
 	glUniformMatrix4fv(base_temp_camera.view_matrix_location, 1, GL_FALSE, base_temp_camera.view_matrix.m);
 	glUniformMatrix4fv(base_temp_camera.project_matrix_location, 1, GL_FALSE, base_temp_camera.projection_matrix.m);
 	
-	mat4 model_matrices[NUM_OF_SPHERS];
-	for (int i = 0; i < NUM_OF_SPHERS; i++) {
+	mat4 model_matrices[TEMPLATE_NUM_OF_SPHERS];
+	for (int i = 0; i < TEMPLATE_NUM_OF_SPHERS; i++) {
 		model_matrices[i] = translate(identity_mat4(), sphere_positions_world[i]);
 	}
 
@@ -160,7 +132,14 @@ int base_scene_template(GLFWwindow* window) {
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 						
-			glUseProgram(base_temp_common.shader_program);
+			glUseProgram(cuda_gl_common->shader_program);
+
+			// place the spheres
+			for (int i = 0; i < TEMPLATE_NUM_OF_SPHERS; i++) {				
+
+				glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[i].m);
+				glDrawArrays(GL_TRIANGLES, 0, point_count);
+			}
 
 			/* Swap front and back buffers */
 			glfwSwapBuffers(window);			
@@ -180,7 +159,7 @@ int base_scene_template(GLFWwindow* window) {
 
 		// PROCESS SHADER RELOAD
 		if (base_temp_user_input.reload_shader_key_pressed) {
-			base_temp_common.update_shaders(base_temp_camera);
+			cuda_gl_common->update_shaders(base_temp_camera);
 		}
 
 		/* Poll for and process events */
