@@ -92,6 +92,8 @@
   <ItemGroup>
     <None Include="shaders\cube_shader.frag" />
     <None Include="shaders\cube_shader.vert" />
+    <None Include="shaders\phong_shader.vert" />
+    <None Include="shaders\phong_shader.frag" />
     <None Include="shaders\quat_camera_shader.frag" />
     <None Include="shaders\quat_camera_shader.vert" />
     <None Include="shaders\triangle_shader.frag" />
@@ -99,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_scenes\cube_map.h" />
+    <ClInclude Include="gl_scenes\phong_spheres.h" />
     <ClInclude Include="gl_scenes\quat_camera_spheres.h" />
     <ClInclude Include="gl_scenes\simple_triangle.h" />
     <ClInclude Include="gl_scenes\template_scene.h" />

@@ -12,6 +12,8 @@
 
 #include "template_scene.h"
 #include "quat_camera_spheres.h"
+#include "phong_spheres.h"
+
 #include "cube_map.h"
 
 #define DISPLAY_WIDTH 1920
@@ -34,7 +36,7 @@ int main(int arc, char** argvv) {
 		execute_kernel();
 	}
 
-	if (true) {
+	if (false) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
@@ -46,7 +48,7 @@ int main(int arc, char** argvv) {
 		draw_template_scene(window, &cuda_gl_common);
 	}
 	
-	if (true) {
+	if (false) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
@@ -57,8 +59,20 @@ int main(int arc, char** argvv) {
 
 		draw_quat_cam_spheres(window, &cuda_gl_common);
 	}
-	
+
 	if (true) {
+		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+		if (!window)
+		{
+			printf("Failed to create Open GL window");
+			return -1;
+		}
+
+		draw_phong_spheres(window, &cuda_gl_common);
+	}
+	
+	if (false) {
 
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

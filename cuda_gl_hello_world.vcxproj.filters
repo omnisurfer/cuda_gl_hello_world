@@ -39,6 +39,12 @@
     <None Include="shaders\quat_camera_shader.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\phong_shader.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\phong_shader.frag">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cuda_gl_hello_world.cpp" />
@@ -80,6 +86,9 @@
     </ClInclude>
     <ClInclude Include="include\cuda_gl_common.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_scenes\phong_spheres.h">
+      <Filter>gl_scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
