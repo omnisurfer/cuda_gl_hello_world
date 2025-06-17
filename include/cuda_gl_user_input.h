@@ -1,12 +1,6 @@
 #pragma once
 
-#include <stdio.h>
-
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
-#include <maths_funcs.h>
-
+#include <cuda_gl_common.h>
 #include <cuda_gl_camera.h>
 
 class CUDAGLUserInput {
@@ -47,7 +41,7 @@ public:
 
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
-
+		
 		// if (scene_key_callback_function != nullptr) {
 		//	scene_key_callback_function(window, key, scancode, action, mods);
 		// }

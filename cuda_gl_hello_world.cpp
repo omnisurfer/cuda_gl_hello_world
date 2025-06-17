@@ -1,24 +1,9 @@
 /*
 * Using nvdia particles CUDA example for guidance.
 */
-// #define _USE_MATH_DEFINES
-// #include <cmath>
-
-// OpenGL Graphics includes
-/* https://www.glfw.org/documentation.html */
-/* https://www.youtube.com/watch?v=uO__ntYT-2Q */
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
 
 // CUDA
 #include <cuda_runtime.h>
-
-// stdlib
-#include <cstdio>
-#include <fstream>
-#include <iterator>
-#include <vector>
-#include <assert.h>
 
 #include <cuda_gl_common.h>
 
@@ -61,7 +46,7 @@ int main(int arc, char** argvv) {
 		draw_template_scene(window, &cuda_gl_common);
 	}
 	
-	if (false) {
+	if (true) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
@@ -73,7 +58,7 @@ int main(int arc, char** argvv) {
 		draw_quat_cam_spheres(window, &cuda_gl_common);
 	}
 	
-	if (false) {
+	if (true) {
 
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

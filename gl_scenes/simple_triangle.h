@@ -1,10 +1,5 @@
 #pragma once
 
-#include <fstream>
-
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
 #include <cuda_gl_common.h>
 
 /* https://antongerdelan.net/opengl/hellotriangle.html */

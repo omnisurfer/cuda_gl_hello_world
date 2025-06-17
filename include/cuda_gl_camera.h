@@ -1,17 +1,6 @@
 #pragma once
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#include <stdio.h>
-#include <cmath>
-
-#include <GLFW/glfw3.h>
-
-#include <maths_funcs.h>
-
-
+#include <cuda_gl_include.h>
 
 class CUDAGLCamera {
 
@@ -66,6 +55,7 @@ public:
 	CUDAGLCamera() {
 		printf("starting cmaera\n");
 	}
+	
 	void init_camera();
 
 	bool update_frame(GLFWwindow *window) {

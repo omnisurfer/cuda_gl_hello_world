@@ -1,13 +1,8 @@
 #pragma once
 
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
-#include <fstream>
-
-#include <cuda_gl_camera.h>
-#include <cuda_gl_user_input.h>
 #include <cuda_gl_common.h>
+#include <cuda_gl_user_input.h>
+#include <cuda_gl_camera.h>
 
 #define SPHERE_VERTEX_SHADER_FILE "quat_camera_shader.vert"
 #define SPHERE_FRAGMENT_SHADER_FILE "quat_camera_shader.frag"

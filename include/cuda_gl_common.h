@@ -1,19 +1,6 @@
 #pragma once
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <fstream>
-#include <vector>
-
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
-#include <obj_parser.h>
-
+#include <cuda_gl_include.h>
 #include <cuda_gl_camera.h>
 
 #define SHADER_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/shaders/"

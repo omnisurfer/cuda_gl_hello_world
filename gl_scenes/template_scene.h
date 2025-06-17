@@ -1,13 +1,8 @@
 #pragma once
 
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
-#include <fstream>
-
-#include <cuda_gl_camera.h>
-#include <cuda_gl_user_input.h>
 #include <cuda_gl_common.h>
+#include <cuda_gl_user_input.h>
+#include <cuda_gl_camera.h>
 
 #define TEMPLATE_VERTEX_SHADER_FILE "template_shader.vert"
 #define TEMPLATE_FRAGMENT_SHADER_FILE "template_shader.frag"

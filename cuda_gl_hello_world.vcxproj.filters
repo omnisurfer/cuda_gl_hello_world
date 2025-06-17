@@ -66,14 +66,20 @@
     <ClInclude Include="include\cuda_gl_user_input.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="cuda_gl_common.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="gl_scenes\base_scene_template.h">
-      <Filter>gl_scenes</Filter>
-    </ClInclude>
     <ClInclude Include="gl_scenes\template_scene.h">
       <Filter>gl_scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cuda_gl_lighting.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cuda_gl_include.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_scenes\cube_map.h">
+      <Filter>gl_scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cuda_gl_common.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

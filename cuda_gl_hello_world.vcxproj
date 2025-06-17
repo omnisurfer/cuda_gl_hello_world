@@ -98,12 +98,14 @@
     <None Include="shaders\triangle_shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cuda_gl_common.h" />
-    <ClInclude Include="gl_scenes\base_scene_template.h" />
+    <ClInclude Include="gl_scenes\cube_map.h" />
     <ClInclude Include="gl_scenes\quat_camera_spheres.h" />
     <ClInclude Include="gl_scenes\simple_triangle.h" />
     <ClInclude Include="gl_scenes\template_scene.h" />
     <ClInclude Include="include\cuda_gl_camera.h" />
+    <ClInclude Include="include\cuda_gl_common.h" />
+    <ClInclude Include="include\cuda_gl_include.h" />
+    <ClInclude Include="include\cuda_gl_lighting.h" />
     <ClInclude Include="include\cuda_gl_user_input.h" />
   </ItemGroup>
   <ItemGroup>
