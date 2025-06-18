@@ -124,7 +124,7 @@ int draw_phong_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		// vertex normals
 		glGenBuffers(1, &normals_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_normals), vertex_normals, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
 		
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);		
 		glEnableVertexAttribArray(1);
