@@ -2,6 +2,9 @@
 
 #include <cuda_gl_common.h>
 
+// https://stackoverflow.com/questions/70706449/how-to-set-a-uniform-struct-in-glsl-4-6
+// https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.html#layout-qualifiers
+
 class CUDAGLLight {
 
 public:
