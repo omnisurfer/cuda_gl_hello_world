@@ -3,6 +3,7 @@
 #include <cuda_gl_common.h>
 #include <cuda_gl_user_input.h>
 #include <cuda_gl_camera.h>
+#include <cuda_gl_lighting.h>
 
 #define PHONG_VERTEX_SHADER_FILE "phong_shader.vert"
 #define PHONG_FRAGMENT_SHADER_FILE "phong_shader.frag"
@@ -90,6 +91,32 @@ int draw_phong_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		vec3(1.5, 1.0, -1.0),
 	};
 
+	const int number_of_lights = 2;
+
+	Light lights[number_of_lights];
+
+	lights[0].light_position_world = vec3(0.0, 0.0, 5.0);
+	lights[0].Ls = vec3(0.2, 0.2, 0.2);
+	lights[0].Ld = vec3(0.7, 0.7, 0.7);
+	lights[0].La = vec3(0.1, 0.1, 0.1);
+
+	lights[0].Ks = vec3(1.0, 1.0, 1.0);
+	lights[0].Kd = vec3(1.0, 0.0, 0.0);
+	lights[0].Ka = vec3(1.0, 1.0, 1.0);
+	lights[0].specular_exponent = 100.0;
+	
+	/**/
+	lights[1].light_position_world = vec3(0.0, 0.0, -5.0);
+	lights[1].Ls = vec3(0.2, 0.2, 0.2);
+	lights[1].Ld = vec3(0.7, 0.7, 0.7);
+	lights[1].La = vec3(0.1, 0.1, 0.1);
+
+	lights[1].Ks = vec3(1.0, 1.0, 1.0);
+	lights[1].Kd = vec3(0.0, 0.25, 0.0);
+	lights[1].Ka = vec3(1.0, 1.0, 1.0);
+	lights[1].specular_exponent = 100.0;
+	/**/
+
 	const float sphere_radius = 1.0f;
 		
 	/* create geometry */
@@ -143,18 +170,39 @@ int draw_phong_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	phong_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
 	
 	model_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
-	int blue_frag_channel_location = glGetUniformLocation(cuda_gl_common->shader_program, "blue_frag_channel");
+	int blue_frag_channel_location = glGetUniformLocation(cuda_gl_common->shader_program, "blue_frag_channel");	
 
 	if (cuda_gl_common->shader_program <= 0)
 	{	
 		fprintf(stderr, "ERROR: could not compile shader_program.");
 		glfwTerminate();
 		return 0;
-	}	
+	}
 
 	glUseProgram(cuda_gl_common->shader_program);
 	glUniformMatrix4fv(phong_camera.view_matrix_location, 1, GL_FALSE, phong_camera.view_matrix.m);
 	glUniformMatrix4fv(phong_camera.project_matrix_location, 1, GL_FALSE, phong_camera.projection_matrix.m);
+
+	/* setup lights */
+	GLuint light_block_location = glGetUniformBlockIndex(cuda_gl_common->shader_program, "light_source");
+	glUniformBlockBinding(cuda_gl_common->shader_program, light_block_location, 0);
+
+
+	/* https://community.khronos.org/t/sending-an-array-of-structs-to-shader-via-an-uniform-buffer-object/75092 */
+	/* https://registry.khronos.org/OpenGL/specs/gl/glspec45.core.pdf */
+	GLuint lights_vbo;
+	glGenBuffers(1, &lights_vbo);
+	glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(Light) * number_of_lights, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_UNIFORM_BUFFER, light_block_location, lights_vbo);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lights), lights);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	/* setup lights */
+
+	printf("size Light %llu lights %llu lights[] %llu\n", sizeof(Light), sizeof(lights), sizeof(lights[0]));
 	
 	mat4 model_matrices[PHONG_NUM_OF_SPHERS];
 	for (int i = 0; i < PHONG_NUM_OF_SPHERS; i++) {
