@@ -7,25 +7,17 @@
 
 struct Light {
 	// fixed point light properties
-	vec3 light_position_world;
-	float padding0;
+	vec4 light_position_world;		
+	vec4 Ls;
+	vec4 Ld;		
+	vec4 La;
 	
-	vec3 Ls;
-	float padding1;
-	
-	vec3 Ld;
-	float padding2;
-	
-	vec3 La;
-	float padding3;
-
 	// surface reflectance
-	vec3 Ks;
-	float padding4;
-	
-	vec3 Kd;
-	float padding5;
-	
-	vec3 Ka;		
-	float specular_exponent;	
+	vec4 Ks;		
+	vec4 Kd;
+	vec4 Ka;		
+	float specular_exponent;
+	float padding0;
+	float padding1;
+	float padding2;
 };

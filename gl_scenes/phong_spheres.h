@@ -91,30 +91,40 @@ int draw_phong_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		vec3(1.5, 1.0, -1.0),
 	};
 
-	const int number_of_lights = 2;
+	const int number_of_lights = 3;
 
 	Light lights[number_of_lights];
 
-	lights[0].light_position_world = vec3(0.0, 0.0, 5.0);
-	lights[0].Ls = vec3(0.2, 0.2, 0.2);
-	lights[0].Ld = vec3(0.7, 0.7, 0.7);
-	lights[0].La = vec3(0.1, 0.1, 0.1);
+	lights[0].light_position_world = vec4(0.0, 0.0, 5.0, 1.0);
+	lights[0].Ls = vec4(0.2, 0.2, 0.2, 1.0);
+	lights[0].Ld = vec4(0.7, 0.7, 0.7, 1.0);
+	lights[0].La = vec4(0.1, 0.1, 0.1, 1.0);
 
-	lights[0].Ks = vec3(1.0, 1.0, 1.0);
-	lights[0].Kd = vec3(1.0, 0.0, 0.0);
-	lights[0].Ka = vec3(1.0, 1.0, 1.0);
+	lights[0].Ks = vec4(1.0, 1.0, 1.0, 1.0);
+	lights[0].Kd = vec4(1.0, 0.0, 0.0, 1.0);
+	lights[0].Ka = vec4(1.0, 1.0, 1.0, 1.0);
 	lights[0].specular_exponent = 100.0;
 	
 	/**/
-	lights[1].light_position_world = vec3(0.0, 0.0, -5.0);
-	lights[1].Ls = vec3(0.2, 0.2, 0.2);
-	lights[1].Ld = vec3(0.7, 0.7, 0.7);
-	lights[1].La = vec3(0.1, 0.1, 0.1);
+	lights[1].light_position_world = vec4(0.0, 0.0, -5.0, 1.0);
+	lights[1].Ls = vec4(0.2, 0.2, 0.2, 1.0);
+	lights[1].Ld = vec4(0.7, 0.7, 0.7, 1.0);
+	lights[1].La = vec4(0.1, 0.1, 0.1, 1.0);
 
-	lights[1].Ks = vec3(1.0, 1.0, 1.0);
-	lights[1].Kd = vec3(0.0, 0.25, 0.0);
-	lights[1].Ka = vec3(1.0, 1.0, 1.0);
+	lights[1].Ks = vec4(1.0, 1.0, 1.0, 1.0);
+	lights[1].Kd = vec4(0.0, 1.0, 0.0, 1.0);
+	lights[1].Ka = vec4(1.0, 1.0, 1.0, 1.0);
 	lights[1].specular_exponent = 100.0;
+
+	lights[2].light_position_world = vec4(0.0, 5.0, 0.0, 1.0);
+	lights[2].Ls = vec4(0.2, 0.2, 0.2, 1.0);
+	lights[2].Ld = vec4(0.7, 0.7, 0.7, 1.0);
+	lights[2].La = vec4(0.1, 0.1, 0.1, 1.0);
+
+	lights[2].Ks = vec4(1.0, 1.0, 1.0, 1.0);
+	lights[2].Kd = vec4(0.0, 0.0, 1.0, 1.0);
+	lights[2].Ka = vec4(1.0, 1.0, 1.0, 1.0);
+	lights[2].specular_exponent = 100.0;
 	/**/
 
 	const float sphere_radius = 1.0f;
