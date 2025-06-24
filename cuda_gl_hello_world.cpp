@@ -8,11 +8,11 @@
 #include <cuda_gl_common.h>
 
 // scenes from the book
-#include "simple_triangle.h"
-
 #include "template_scene.h"
+#include "simple_triangle.h"
 #include "quat_camera_spheres.h"
 #include "phong_spheres.h"
+#include "texture_load.h"
 
 #include "cube_map.h"
 
@@ -47,6 +47,19 @@ int main(int arc, char** argvv) {
 
 		draw_template_scene(window, &cuda_gl_common);
 	}
+
+	if (false) {
+
+		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+		if (!window)
+		{
+			printf("Failed to create Open GL window");
+			return -1;
+		}
+
+		draw_simple_triangle(window, &cuda_gl_common);
+	}
 	
 	if (false) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -60,7 +73,7 @@ int main(int arc, char** argvv) {
 		draw_quat_cam_spheres(window, &cuda_gl_common);
 	}
 
-	if (true) {
+	if (false) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
@@ -71,18 +84,17 @@ int main(int arc, char** argvv) {
 
 		draw_phong_spheres(window, &cuda_gl_common);
 	}
-	
-	if (false) {
 
+	if (true) {
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
 		{
 			printf("Failed to create Open GL window");
 			return -1;
-		}		
+		}
 
-		draw_simple_triangle(window, &cuda_gl_common);
+		draw_texture_load(window, &cuda_gl_common);
 	}
 
 	if (false) {

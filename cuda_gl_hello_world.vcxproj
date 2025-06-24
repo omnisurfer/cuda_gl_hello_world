@@ -96,6 +96,8 @@
     <None Include="shaders\phong_shader.frag" />
     <None Include="shaders\quat_camera_shader.frag" />
     <None Include="shaders\quat_camera_shader.vert" />
+    <None Include="shaders\texture_shader.frag" />
+    <None Include="shaders\texture_shader.vert" />
     <None Include="shaders\triangle_shader.frag" />
     <None Include="shaders\triangle_shader.vert" />
   </ItemGroup>
@@ -105,6 +107,7 @@
     <ClInclude Include="gl_scenes\quat_camera_spheres.h" />
     <ClInclude Include="gl_scenes\simple_triangle.h" />
     <ClInclude Include="gl_scenes\template_scene.h" />
+    <ClInclude Include="gl_scenes\texture_load.h" />
     <ClInclude Include="include\cuda_gl_camera.h" />
     <ClInclude Include="include\cuda_gl_common.h" />
     <ClInclude Include="include\cuda_gl_include.h" />

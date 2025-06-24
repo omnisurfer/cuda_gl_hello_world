@@ -177,8 +177,6 @@ int draw_cube_map(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, dummy_texture_cube);
 	glBindVertexArray(cube_vao);
 
-
-
 	while (!glfwWindowShouldClose(window))
 	{
 		glDepthMask(GL_FALSE);
