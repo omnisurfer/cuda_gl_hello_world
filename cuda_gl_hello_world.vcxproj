@@ -96,6 +96,8 @@
     <None Include="shaders\phong_shader.frag" />
     <None Include="shaders\quat_camera_shader.frag" />
     <None Include="shaders\quat_camera_shader.vert" />
+    <None Include="shaders\texture_orig_shader.frag" />
+    <None Include="shaders\texture_orig_shader.vert" />
     <None Include="shaders\texture_shader.frag" />
     <None Include="shaders\texture_shader.vert" />
     <None Include="shaders\triangle_shader.frag" />

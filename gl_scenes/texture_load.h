@@ -10,6 +10,8 @@
 
 #define TEXTURE_MESH_FILE "3d_objects/sphere.obj"
 
+#define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
+
 #define TEXTURE_NUM_OF_SPHERES 4
 
 CUDAGLCamera texture_load_camera;
@@ -82,15 +84,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	);
 
 	texture_load_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));
-
-	/* load up spheres */
-	vec3 sphere_positions_world[] = {
-		vec3(-2.0, 0.0, 0.0),
-		vec3(2.0, 0.0, 0.0),
-		vec3(-2.0, 0.0, -2.0),
-		vec3(1.5, 1.0, -1.0),
-	};
-
+	
 	const int number_of_lights = 3;
 
 	Light lights[number_of_lights];
@@ -128,8 +122,16 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	/**/
 
 	const float sphere_radius = 1.0f;
-		
-	/* create geometry */
+	
+#pragma region Geometry
+	/* geometry */
+	vec3 model_positions_world[] = {
+		vec3(-2.0, 0.0, 0.0),
+		vec3(2.0, 0.0, 0.0),
+		vec3(-2.0, 0.0, -2.0),
+		vec3(1.5, 1.0, -1.0),
+	};
+
 	int model_matrix_location = 0;
 
 	GLfloat* vertex_points = NULL;
@@ -141,7 +143,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	mesh_file_path.append(TEXTURE_MESH_FILE);
 
 	load_obj_file(mesh_file_path.c_str(), vertex_points, texture_coordinates, vertex_normals, point_count);
-
+	
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -166,8 +168,66 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);		
 		glEnableVertexAttribArray(1);
 	}
+	
+	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES];
+	for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
+		model_matrices[i] = translate(identity_mat4(), model_positions_world[i]);
+	}
 
-	/* create shaders */
+	/* 2d texture plane geometry */
+	GLfloat tex_triangle_points[] = {
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f,
+		-0.5f, -0.5f, 0.0f
+	};
+
+	GLfloat tex_triangle_coords[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f
+	};
+
+	if(true) {
+		GLuint tex_triangle_points_vbo;
+		glGenBuffers(1, &tex_triangle_points_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(tex_triangle_points), tex_triangle_points, GL_STATIC_DRAW);
+
+		GLuint tex_coords_vbo;
+		glGenBuffers(1, &tex_coords_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, tex_coords_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(tex_triangle_coords), tex_triangle_coords, GL_STATIC_DRAW);
+
+		/*
+		* May need to rethink how I use VAOs
+		* https://stackoverflow.com/questions/59595805/what-is-the-best-way-to-draw-multiple-vao-using-the-same-shader-but-not-having-t
+		*/
+
+		GLuint tex_triangle_vao;
+		glGenVertexArrays(1, &tex_triangle_vao);
+		glBindVertexArray(tex_triangle_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);
+
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindBuffer(GL_ARRAY_BUFFER, tex_coords_vbo);
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+	
+		// temp use of model matrix postion 4 to test placing the texure model.
+		model_matrices[0] = translate(identity_mat4(), model_positions_world[0]);
+	}
+#pragma endregion
+
+#pragma region Shaders
+	/* shaders */
 	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
 	cuda_gl_common->vertex_shader_file_path.append(TEXTURE_VERTEX_SHADER_FILE);
 
@@ -192,8 +252,10 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	glUseProgram(cuda_gl_common->shader_program);
 	glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
 	glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
+#pragma endregion
 
-	/* setup lights */
+#pragma region Lighting
+	/* lights */
 	GLuint light_block_location = glGetUniformBlockIndex(cuda_gl_common->shader_program, "light_source");
 	glUniformBlockBinding(cuda_gl_common->shader_program, light_block_location, 0);
 
@@ -209,16 +271,33 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lights), lights);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	/* setup lights */
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);	
 
 	printf("size Light %llu lights %llu lights[] %llu\n", sizeof(Light), sizeof(lights), sizeof(lights[0]));
-	
-	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES];
-	for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
-		model_matrices[i] = translate(identity_mat4(), sphere_positions_world[i]);
+#pragma endregion
+
+#pragma region Textures
+	std::string cube_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
+	cube_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
+
+	GLuint gl_texture = 0;
+	glGenTextures(1, &gl_texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gl_texture);
+
+	bool load_texture_ok = cuda_gl_common->load_texture(std::string(cube_map_file_path).append("posz.jpg").c_str());
+
+	if (load_texture_ok) {
+		printf("TEXTURE LOADED OK!\n");
 	}
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+#pragma endregion
+	
 	/* opengl configuration */
 	glEnable(GL_DEPTH_TEST);	// enable depth-testing
 	glEnable(GL_LESS);			// depth-testing interprets a smaller value as "closer"
@@ -265,6 +344,10 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glDrawArrays(GL_TRIANGLES, 0, point_count);
 			}
 
+			// draw the texture model
+			glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[0].m);
+			glDrawArrays(GL_TRIANGLES, 3, point_count);
+			
 			/* Swap front and back buffers */
 			glfwSwapBuffers(window);			
 		}
@@ -286,7 +369,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
 				float t_distance = 0.0f;
 
-				if (texture_load_ray_intersect(texture_load_camera.camera_position, ray_world, sphere_positions_world[i], sphere_radius, &t_distance)) {
+				if (texture_load_ray_intersect(texture_load_camera.camera_position, ray_world, model_positions_world[i], sphere_radius, &t_distance)) {
 
 					// only use cloest sphere
 					if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {

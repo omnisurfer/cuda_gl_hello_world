@@ -45,6 +45,12 @@
     <None Include="shaders\phong_shader.frag">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\texture_orig_shader.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\texture_orig_shader.vert">
+      <Filter>shaders</Filter>
+    </None>
     <None Include="shaders\texture_shader.frag">
       <Filter>shaders</Filter>
     </None>
