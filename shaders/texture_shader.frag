@@ -1,6 +1,6 @@
 # version 410 core
 
-in vec3 position_eye, normal_eye;
+// in vec3 position_eye, normal_eye;
 
 in vec2 texture_coordinates;
 uniform sampler2D basic_texture;
