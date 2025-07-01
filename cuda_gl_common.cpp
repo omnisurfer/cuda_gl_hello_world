@@ -1,5 +1,36 @@
 #include <cuda_gl_common.h>
 
+static void debug_gl_callback(
+	GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar* message,
+	const void* userParam
+) {
+	
+	switch (source) {
+	case 0x8246:
+		printf("API ");
+		break;
+	}
+
+	switch(type) {
+	case 0x824C:
+		printf("ERROR ");
+		break;
+	}
+
+	switch (severity) {
+	case 0x9146:
+		printf("HIGH ");
+	}
+
+	printf("source 0x%x type 0x%x severity 0x%x\n", source, type, severity);
+	printf("length %i message %s userParam %i\n", length, message, *(int*)userParam);
+}
+
 GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {
 
 	printf("GLFW %s\n", glfwGetVersionString());
@@ -21,13 +52,15 @@ GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	*/
-
+	
 	/* MSAA */
 	glfwWindowHint(GLFW_SAMPLES, 8);
+	// enable debug messages
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
 	/* Create a windowed mode window and context */
 	window = glfwCreateWindow(window_width, window_height, "CUDA GL Hello World", NULL, NULL);
-
+	
 	if (!window)
 	{
 		glfwTerminate();
@@ -35,7 +68,7 @@ GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {
 	}
 
 	glfwMakeContextCurrent(window);
-
+	
 	/* Start glad for OpenGL functions */
 	int version_glad = gladLoadGL(glfwGetProcAddress);
 
@@ -54,6 +87,20 @@ GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {
 	const GLFWvidmode* vid_mode = glfwGetVideoMode(primary_monitor);
 
 	glfwSetWindowPos(window, (vid_mode->width - window_width) / 2, (vid_mode->height - window_height) / 2);
+
+	if (true) {
+		/**/
+		if (GL_KHR_debug) {
+			int param = -1;
+			printf("KHR debug extension found!\n");
+			glDebugMessageCallback(debug_gl_callback, &param);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			printf("debug callback enabled\n");
+		}
+		else {
+			printf("KHR debug extension not avaialbe.\n");
+		}
+	}
 
 	return window;
 }

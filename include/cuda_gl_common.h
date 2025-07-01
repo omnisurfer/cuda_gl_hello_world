@@ -10,6 +10,8 @@
 #define ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/assets/"
 #define THIRD_PARTY_ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/Common/assets/"
 
+extern "C" void debug_gl_callback();
+
 class CUDAGLCommon {
 
 	typedef void (*scene_key_callback_ptr)(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -24,7 +26,7 @@ public:
 	std::string frag_shader_file_path;
 
 public:
-	
+		
 	GLFWwindow* init_gl(int window_width, int window_height);
 
 	void update_shaders(CUDAGLCamera camera);	

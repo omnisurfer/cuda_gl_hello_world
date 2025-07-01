@@ -23,7 +23,6 @@
 extern "C" int execute_kernel();
 
 /* Create a shader https://antongerdelan.net/opengl/compute.html */
-// TBD
 
 int main(int arc, char** argvv) {
 	GLFWwindow* window = NULL;
@@ -31,7 +30,7 @@ int main(int arc, char** argvv) {
 	CUDAGLCommon cuda_gl_common;
 
 	printf("Starting cuda_gl_hello_world\n");
-
+		
 	if (true) {
 		execute_kernel();
 	}
@@ -86,15 +85,16 @@ int main(int arc, char** argvv) {
 	}
 
 	if (true) {
+		
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
 		{
 			printf("Failed to create Open GL window");
 			return -1;
-		}
+		}		
 
-		draw_texture_load(window, &cuda_gl_common);
+		draw_texture_load(window, &cuda_gl_common);		
 	}
 
 	if (false) {

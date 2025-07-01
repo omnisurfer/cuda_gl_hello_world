@@ -69,6 +69,10 @@ bool texture_load_ray_intersect(vec3 ray_origin_world, vec3 ray_direction_world,
 /* From 09_texture_load */
 int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		
+	/* Cause debug message to be generated */
+	// GLuint buffer;
+	// glGenBuffers(-1, &buffer);
+
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
 
@@ -125,7 +129,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	/**/
 
 	const float sphere_radius = 1.0f;
-	
+		
 #pragma region Sphere Geometry
 	/* geometry */
 	vec3 model_positions_world[] = {
@@ -338,7 +342,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	
 	/* opengl configuration */
 	glEnable(GL_DEPTH_TEST);	// enable depth-testing
-	glEnable(GL_LESS);			// depth-testing interprets a smaller value as "closer"
+	// glEnable(GL_LESS);			// depth-testing interprets a smaller value as "closer" - THIS IS INVALID ACCORDING TO DEBUG
 	glEnable(GL_CULL_FACE);		// cull face
 	glCullFace(GL_BACK);		// cull back face
 	glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
@@ -349,7 +353,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	/* 0 swap immediate 1 sync to monitor */
 	glfwSwapInterval(1);
-	
+		
 	int selected_sphere = -1;
 
 	while (!glfwWindowShouldClose(window))
@@ -365,33 +369,36 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);		
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-						
-			glUseProgram(lighting_shader_program);
-			glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
-			glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
 
-			// color selected spheres
-			for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
-				
-				if (selected_sphere == i) {					
-					glUniform1f(blue_frag_channel_location, 1.0f);					
-				}
-				else {
-					glUniform1f(blue_frag_channel_location, 0.0f);
-				}
-
-				glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[i].m);
-
-				glBindVertexArray(vao_spheres);
-				glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-				glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-				glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);								
-
-				glDrawArrays(GL_TRIANGLES, 0, point_count);
-			}			
-
+			// draw spheres
 			if (true) {
-				// draw the texture model
+				glUseProgram(lighting_shader_program);
+				glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
+				glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
+
+				// color selected spheres
+				for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
+
+					if (selected_sphere == i) {
+						glUniform1f(blue_frag_channel_location, 1.0f);
+					}
+					else {
+						glUniform1f(blue_frag_channel_location, 0.0f);
+					}
+
+					glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[i].m);
+
+					glBindVertexArray(vao_spheres);
+					glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+					glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+					glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
+
+					glDrawArrays(GL_TRIANGLES, 0, point_count);
+				}
+			}
+
+			// draw the texture model
+			if (false) {
 				glUseProgram(texture_shader_program);
 				glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
 				glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
