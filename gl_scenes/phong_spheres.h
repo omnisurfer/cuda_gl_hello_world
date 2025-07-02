@@ -211,8 +211,6 @@ int draw_phong_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lights), lights);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	/* setup lights */
-
-	printf("size Light %llu lights %llu lights[] %llu\n", sizeof(Light), sizeof(lights), sizeof(lights[0]));
 	
 	mat4 model_matrices[PHONG_NUM_OF_SPHERS];
 	for (int i = 0; i < PHONG_NUM_OF_SPHERS; i++) {
