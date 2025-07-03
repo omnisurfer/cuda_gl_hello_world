@@ -259,6 +259,52 @@ void configure_resources_texture(
 
 }
 
+int configure_shaders_texture(CUDAGLCommon* cuda_gl_common, GLuint &gl_texture) {
+
+	std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
+	texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
+
+	/* shaders */
+	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
+	cuda_gl_common->vertex_shader_file_path.append("texture_shader.vert");
+
+	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
+	cuda_gl_common->frag_shader_file_path.append("texture_shader.frag");
+
+	texture_shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
+	
+	if (texture_shader_program <= 0)
+	{
+		fprintf(stderr, "ERROR: could not compile shader_program.");
+		glfwTerminate();
+		return 0;
+	}
+	
+	if (true) {
+		glGenTextures(1, &gl_texture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, gl_texture);
+
+		bool load_texture_ok = cuda_gl_common->load_texture(std::string(texture_map_file_path).append("posz.jpg").c_str());
+
+		if (!load_texture_ok) {
+			printf("Texture failed to load properly!\n");
+		}
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		GLfloat max_ansio = 0.0f;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_ansio);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_ansio);
+	}
+
+	return 0;
+}
+
 /* From 09_texture_load */
 int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			
@@ -279,17 +325,9 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		window_height
 	);
 
-	texture_load_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));
-	
-	const int number_of_lights = 3;
-
-	Light lights[number_of_lights];
-
-	init_lights(lights, 3);
-
-	const float sphere_radius = 1.0f;
+	texture_load_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));	
 		
-#pragma region Sphere Geometry	
+#pragma region Sphere Geometry and Shaders
 	const int number_of_model_positions = 5;
 
 	vec3 model_positions_world[number_of_model_positions];
@@ -305,26 +343,32 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	int point_count;
 
 	configure_resources_spheres(vao_spheres, points_vbo, normals_vbo, model_matrices, model_positions_world, point_count);
-#pragma endregion
 
-#pragma region Sphere Shaders	
 	configure_shaders_spheres(cuda_gl_common, model_matrix_location);
 #pragma endregion
 
-#pragma region Lighting
-	/* lights */
+#pragma region Lighting	
+
+	const int number_of_lights = 3;
+
+	Light lights[number_of_lights];
+
+	init_lights(lights, 3);
+
+	const float sphere_radius = 1.0f;
+
 	GLuint lights_vbo;
 	GLuint light_block_location = glGetUniformBlockIndex(lighting_shader_program, "light_source");
 
 	int size_of_lights_in_bytes = sizeof(lights);
-	
+		
 	configure_scene_lighting(
 		lights_vbo,
 		light_block_location,
 		lights,
 		size_of_lights_in_bytes,
 		number_of_lights
-	);
+	);	
 #pragma endregion
 
 #pragma region Textures
@@ -372,57 +416,12 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		size_of_tex_triangle_coords
 	);
 	
-	std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
-	texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
-
-	/* shaders */
-	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->vertex_shader_file_path.append("texture_shader.vert");
-
-	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->frag_shader_file_path.append("texture_shader.frag");
-	
-	texture_shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
-
-	if (texture_shader_program <= 0)
-	{
-		fprintf(stderr, "ERROR: could not compile shader_program.");
-		glfwTerminate();
-		return 0;
-	}
-	
 	GLuint gl_texture = 0;
-	glGenTextures(1, &gl_texture);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, gl_texture);
 
-	bool load_texture_ok = cuda_gl_common->load_texture(std::string(texture_map_file_path).append("posz.jpg").c_str());
-
-	if (!load_texture_ok) {
-		printf("Texture failed to load properly!\n");
-	}
-
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	GLfloat max_ansio = 0.0f;
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_ansio);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_ansio);
+	configure_shaders_texture(cuda_gl_common, gl_texture);
 #pragma endregion
-	
-	/* opengl configuration */
-	glEnable(GL_DEPTH_TEST);	// enable depth-testing
-	glDepthFunc(GL_LESS);		// depth-testing interprets a smaller value as "closer"
-	glEnable(GL_CULL_FACE);		// cull face
-	glCullFace(GL_BACK);		// cull back face
-	glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
-
-	// wire-frame mode
-	// glPolygonMode(GL_FRONT, GL_LINE);
-	// glPolygonMode(GL_BACK, GL_LINE);
+		
+	cuda_gl_common->set_opengl_flags();
 
 	/* 0 swap immediate 1 sync to monitor */
 	glfwSwapInterval(1);
@@ -464,12 +463,14 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			}
 
 			// draw the texture model
-			if (false) {
+			if (true) {
 				glUseProgram(texture_shader_program);
 				glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
 				glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
 
-				glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[4].m);
+				// This causes this error:
+				// API ERROR HIGH message GL_INVALID_OPERATION error generated. Uniform must be a matrix type in call to UniformMatrix*. userParam -1
+				// glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[4].m);
 
 				glBindVertexArray(vao_texture);
 				glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);

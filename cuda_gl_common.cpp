@@ -10,9 +10,28 @@ static void debug_gl_callback(
 	const void* userParam
 ) {
 	
+	printf("\n");
 	switch (source) {
 	case 0x8246:
 		printf("API ");
+		break;
+	case 0x8247:
+		printf("WINDOW_SYSTEM ");
+		break;
+	case 0x8248:
+		printf("SHADER_COMPILER ");
+		break;
+	case 0x8249:
+		printf("THIRD_PARTY ");
+		break;
+	case 0x824A:
+		printf("APPLICATION ");
+		break;
+	case 0x824B:
+		printf("OTHER ");
+		break;
+	default:
+		printf("UNDEFINED ");
 		break;
 	}
 
@@ -20,15 +39,54 @@ static void debug_gl_callback(
 	case 0x824C:
 		printf("ERROR ");
 		break;
+	case 0x824D:
+		printf("DEPRECATED_BEHAVIOR ");
+		break;
+	case 0x824E:
+		printf("UNDEFINED_BEHAVIOR ");
+		break;
+	case 0x824F:
+		printf("PORTABILITY ");
+		break;
+	case 0x8250:
+		printf("PERFORMANCE ");
+		break;
+	case 0x8251:
+		printf("OTHER ");
+		break;
+	case 0x8268:
+		printf("MARKER ");
+		break;
+	case 0x8269:
+		printf("PUSH_GROUP ");
+		break;
+	case 0x826A:
+		printf("POP_GROUP ");
+		break;
+	default:
+		printf("undefined ");
+		break;
 	}
 
 	switch (severity) {
 	case 0x9146:
 		printf("HIGH ");
+		break;
+	case 0x9147:
+		printf("MEDIUM ");
+		break;
+	case 0x9148:
+		printf("LOW ");
+		break;
+	case 0x826B:
+		printf("NOTIFICATION ");
+		break;
+	default:
+		printf("undefined ");
+		break;
 	}
-
-	printf("source 0x%x type 0x%x severity 0x%x\n", source, type, severity);
-	printf("length %i message %s userParam %i\n", length, message, *(int*)userParam);
+	
+	printf("message %s userParam %i\n", message, *(int*)userParam);
 }
 
 GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {

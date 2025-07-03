@@ -27,6 +27,19 @@ public:
 
 public:
 		
+	void set_opengl_flags() {
+		/* opengl configuration */
+		glEnable(GL_DEPTH_TEST);	// enable depth-testing
+		glDepthFunc(GL_LESS);		// depth-testing interprets a smaller value as "closer"
+		glEnable(GL_CULL_FACE);		// cull face
+		glCullFace(GL_BACK);		// cull back face
+		glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
+
+		// wire-frame mode
+		// glPolygonMode(GL_FRONT, GL_LINE);
+		// glPolygonMode(GL_BACK, GL_LINE);
+	}
+
 	GLFWwindow* init_gl(int window_width, int window_height);
 
 	void update_shaders(CUDAGLCamera camera);	

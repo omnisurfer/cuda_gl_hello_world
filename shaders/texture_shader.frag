@@ -11,4 +11,6 @@ void main()
 {
     vec4 texel = texture(basic_texture, texture_coordinates);
     frag_color = texel;
+    
+    // frag_color = vec4(1.0, 0.0, 1.0, 1.0);
 }
