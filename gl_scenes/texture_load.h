@@ -163,7 +163,7 @@ void configure_resources_spheres(
 	}
 }
 
-int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &model_matrix_location) {
+int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &view_matrix_vbo, GLuint &projection_matrix_vbo, GLuint &model_matrix_vbo) {
 
 	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
 	cuda_gl_common->vertex_shader_file_path.append(TEXTURE_VERTEX_SHADER_FILE);
@@ -178,7 +178,7 @@ int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &model_matrix
 	texture_load_camera.view_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
 	texture_load_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
 
-	model_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");	
+	model_matrix_vbo = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");	
 
 	if (lighting_shader_program <= 0)
 	{
@@ -251,15 +251,20 @@ void configure_resources_texture(
 	glBufferData(GL_ARRAY_BUFFER, size_of_tex_triangle_coords, tex_triangle_coords, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, tex_coords_vbo);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize		
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize
 	glEnableVertexAttribArray(1);
 
 	// temp use of model matrix postion 4 to test placing the texure model.	
 	model_matrices[4] = translate(identity_mat4(), model_positions_world[4]);
-
 }
 
-int configure_shaders_texture(CUDAGLCommon* cuda_gl_common, GLuint &gl_texture) {
+int configure_shaders_texture(
+	CUDAGLCommon* cuda_gl_common, 
+	GLuint& gl_texture, 
+	GLuint& view_matrix_vbo, 
+	GLuint& projection_matrix_vbo, 
+	GLuint& model_matrix_vbo
+) {
 
 	std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
 	texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
@@ -271,8 +276,17 @@ int configure_shaders_texture(CUDAGLCommon* cuda_gl_common, GLuint &gl_texture) 
 	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
 	cuda_gl_common->frag_shader_file_path.append("texture_shader.frag");
 
-	texture_shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
+	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
 	
+	texture_shader_program = cuda_gl_common->shader_program;
+
+	/*
+	texture_load_camera.view_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
+	texture_load_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
+
+	model_matrix_vbo = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
+	*/
+
 	if (texture_shader_program <= 0)
 	{
 		fprintf(stderr, "ERROR: could not compile shader_program.");
@@ -333,18 +347,22 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	vec3 model_positions_world[number_of_model_positions];
 
 	init_model_positions(model_positions_world, number_of_model_positions);
-
-	GLuint model_matrix_location = 0;
+	
 	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES + 1];
 
 	GLuint vao_spheres;
 	GLuint points_vbo;
 	GLuint normals_vbo;
+
+	GLuint view_matrix_vbo;
+	GLuint projection_matrix_vbo;
+	GLuint model_matrix_vbo;
+
 	int point_count;
 
 	configure_resources_spheres(vao_spheres, points_vbo, normals_vbo, model_matrices, model_positions_world, point_count);
 
-	configure_shaders_spheres(cuda_gl_common, model_matrix_location);
+	configure_shaders_spheres(cuda_gl_common, view_matrix_vbo, projection_matrix_vbo, model_matrix_vbo);
 #pragma endregion
 
 #pragma region Lighting	
@@ -418,7 +436,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	
 	GLuint gl_texture = 0;
 
-	configure_shaders_texture(cuda_gl_common, gl_texture);
+	configure_shaders_texture(cuda_gl_common, gl_texture, view_matrix_vbo, projection_matrix_vbo, model_matrix_vbo);
 #pragma endregion
 		
 	cuda_gl_common->set_opengl_flags();
@@ -451,8 +469,8 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				// color selected spheres
 				for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
 
-					glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[i].m);
-
+					glUniformMatrix4fv(model_matrix_vbo, 1, GL_FALSE, model_matrices[i].m);
+					
 					glBindVertexArray(vao_spheres);
 					glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
 					glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
@@ -467,10 +485,10 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glUseProgram(texture_shader_program);
 				glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
 				glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
-
+				
 				// This causes this error:
-				// API ERROR HIGH message GL_INVALID_OPERATION error generated. Uniform must be a matrix type in call to UniformMatrix*. userParam -1
-				// glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, model_matrices[4].m);
+				// API ERROR HIGH message GL_INVALID_OPERATION error generated. Uniform must be a matrix type in call to UniformMatrix*. userParam -1				
+				// glUniformMatrix4fv(model_matrix_vbo, 1, GL_FALSE, model_matrices[4].m);
 
 				glBindVertexArray(vao_texture);
 				glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);
@@ -490,28 +508,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				
 		// MOUSE PROCESSING
 		if (texture_load_user_input.mouse_button_left) {
-				
-			// vec3 ray_world = process_mouse(window);
-			vec3 ray_world = texture_load_user_input.process_mouse(window, &texture_load_camera);
-
-			// sphere check
-			int closest_sphere_clicked = -1;
-			float closest_intersection = 0.0f;
-
-			for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
-				float t_distance = 0.0f;
-
-				if (texture_load_ray_intersect(texture_load_camera.camera_position, ray_world, model_positions_world[i], sphere_radius, &t_distance)) {
-
-					// only use cloest sphere
-					if (closest_sphere_clicked == -1 || t_distance < closest_intersection) {
-						closest_sphere_clicked = i;
-						closest_intersection = t_distance;
-					}
-				}
-			}
-			selected_sphere = closest_sphere_clicked;
-			// printf("sphere %i was selected\n", selected_sphere);
+			// do nothing			
 		}
 
 		// PROCESS SHADER RELOAD
