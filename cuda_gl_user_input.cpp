@@ -295,8 +295,7 @@ void CUDAGLUserInput::process_movements(CUDAGLCamera* camera) {
 	}
 
 	if (camera_moved) {
-		camera->move_camera();
-		glUniformMatrix4fv(camera->view_matrix_location, 1, GL_FALSE, camera->view_matrix.m);
+		camera->move_camera();		
 	}
 }
 

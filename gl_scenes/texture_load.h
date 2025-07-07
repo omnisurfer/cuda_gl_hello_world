@@ -20,57 +20,6 @@ CUDAGLUserInput texture_load_user_input;
 GLuint lighting_shader_program = 0;
 GLuint texture_shader_program = 0;
 
-/* taken from 07_ray_picking */
-bool texture_load_ray_intersect(
-	vec3 ray_origin_world, 
-	vec3 ray_direction_world, 
-	vec3 sphere_center_world, 
-	float sphere_radius, 
-	float* intersection_distance
-) {	
-	vec3 dist_to_sphere = ray_origin_world - sphere_center_world;
-	float b = dot(ray_direction_world, dist_to_sphere);
-	float c = dot(dist_to_sphere, dist_to_sphere) - sphere_radius * sphere_radius;
-	float b_squared_minus_c = b * b - c;
-
-	// check for imaginary answers. Ray completely missies sphere
-	if (b_squared_minus_c < 0.0f) {
-		return false;
-	}
-
-	if (b_squared_minus_c > 0.0f) {
-		// get the 2 intersection distances along the ray
-		float t_a = -b + sqrt(b_squared_minus_c);
-		float t_b = -b - sqrt(b_squared_minus_c);
-		*intersection_distance = t_b;
-
-		// if behind viewer, throw one or both away
-		if (t_a < 0.0) {
-			if (t_b < 0.0) {
-				return false;
-			}
-			else if (t_b < 0.0) {
-				*intersection_distance = t_a;
-			}
-		}
-
-		return true;
-	}
-
-	if (b_squared_minus_c == 0.0f) {
-		// if behind the viewer
-		float t = -b + sqrt(b_squared_minus_c);
-
-		if (t < 0.0f) {
-			return false;
-		}
-		*intersection_distance = t;
-		return true;
-	}
-	// note: check for ray origin is inside sphere radius could occur.
-	return false;
-}
-
 void init_lights(Light* lights, int number_of_lights) {
 
 	lights[0].light_position_world = vec4(0.0, 0.0, 5.0, 1.0);
@@ -115,8 +64,8 @@ void init_model_positions(vec3* model_positions, int number_of_models) {
 
 void configure_resources_spheres(
 	GLuint& vao_spheres,
-	GLuint& points_vbo,
-	GLuint& normals_vbo,
+	GLuint& vbo_sphere_points,
+	GLuint& vbo_sphere_normals,
 	mat4* model_matrices,
 	vec3* model_positions_world,
 	int& point_count
@@ -137,16 +86,16 @@ void configure_resources_spheres(
 	if (NULL != vertex_points) {
 
 		// vertex points
-		glGenBuffers(1, &points_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+		glGenBuffers(1, &vbo_sphere_points);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_points);
 		glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_points, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
 
 		// vertex normals
-		glGenBuffers(1, &normals_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+		glGenBuffers(1, &vbo_sphere_normals);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_normals);
 		glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -163,7 +112,7 @@ void configure_resources_spheres(
 	}
 }
 
-int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &view_matrix_vbo, GLuint &projection_matrix_vbo, GLuint &model_matrix_vbo) {
+int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &vbo_view_matrix, GLuint &vbo_projection_matrix, GLuint &vbo_model_matrix) {
 
 	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
 	cuda_gl_common->vertex_shader_file_path.append(TEXTURE_VERTEX_SHADER_FILE);
@@ -175,10 +124,10 @@ int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &view_matrix_
 
 	lighting_shader_program = cuda_gl_common->shader_program;
 
-	texture_load_camera.view_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
-	texture_load_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
+	vbo_view_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
+	vbo_projection_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
 
-	model_matrix_vbo = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");	
+	vbo_model_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");	
 
 	if (lighting_shader_program <= 0)
 	{
@@ -186,21 +135,24 @@ int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &view_matrix_
 		glfwTerminate();
 		return -1;
 	}
+	else {
+		printf("sph vbo_view %i vbo_proj %i vbo_model %i\n", vbo_view_matrix, vbo_projection_matrix, vbo_model_matrix);
+	}
 }
 
-int configure_scene_lighting(GLuint &lights_vbo, GLuint &light_block_location, Light* lights, int size_of_lights_in_bytes, int number_of_lights) {
+int configure_scene_lighting(GLuint &vbo_lights, GLuint &block_location_lights, Light* lights, int size_of_lights_in_bytes, int number_of_lights) {
 
-	glUniformBlockBinding(lighting_shader_program, light_block_location, 0);
+	glUniformBlockBinding(lighting_shader_program, block_location_lights, 0);
 
 	/* https://community.khronos.org/t/sending-an-array-of-structs-to-shader-via-an-uniform-buffer-object/75092 */
 	/* https://registry.khronos.org/OpenGL/specs/gl/glspec45.core.pdf */
-	glGenBuffers(1, &lights_vbo);
-	glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
+	glGenBuffers(1, &vbo_lights);
+	glBindBuffer(GL_UNIFORM_BUFFER, vbo_lights);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(Light) * number_of_lights, NULL, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_UNIFORM_BUFFER, light_block_location, lights_vbo);
+	glBindBufferBase(GL_UNIFORM_BUFFER, block_location_lights, vbo_lights);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
+	glBindBuffer(GL_UNIFORM_BUFFER, vbo_lights);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, size_of_lights_in_bytes, lights);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
@@ -225,8 +177,8 @@ void init_textures_points(GLfloat *texture_triangle_points, int number_of_triang
 
 void configure_resources_texture(
 	GLuint& vao_texture,
-	GLuint& tex_triangle_points_vbo,
-	GLuint& tex_coords_vbo,
+	GLuint& vbo_textrue_points,
+	GLuint& vbo_textrue_coords,
 	mat4* model_matrices,
 	vec3* model_positions_world,
 	GLfloat* tex_triangle_points,
@@ -238,19 +190,19 @@ void configure_resources_texture(
 	glGenVertexArrays(1, &vao_texture);
 	glBindVertexArray(vao_texture);
 
-	glGenBuffers(1, &tex_triangle_points_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);
+	glGenBuffers(1, &vbo_textrue_points);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_points);
 	glBufferData(GL_ARRAY_BUFFER, size_of_tex_triangle_points, tex_triangle_points, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_points);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(0);
 
-	glGenBuffers(1, &tex_coords_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, tex_coords_vbo);
+	glGenBuffers(1, &vbo_textrue_coords);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_coords);
 	glBufferData(GL_ARRAY_BUFFER, size_of_tex_triangle_coords, tex_triangle_coords, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, tex_coords_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_coords);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize
 	glEnableVertexAttribArray(1);
 
@@ -261,9 +213,9 @@ void configure_resources_texture(
 int configure_shaders_texture(
 	CUDAGLCommon* cuda_gl_common, 
 	GLuint& gl_texture, 
-	GLuint& view_matrix_vbo, 
-	GLuint& projection_matrix_vbo, 
-	GLuint& model_matrix_vbo
+	GLuint& vbo_view_matrix, 
+	GLuint& vbo_projection_matrix, 
+	GLuint& vbo_model_matrix
 ) {
 
 	std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
@@ -280,18 +232,19 @@ int configure_shaders_texture(
 	
 	texture_shader_program = cuda_gl_common->shader_program;
 
-	/*
-	texture_load_camera.view_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
-	texture_load_camera.project_matrix_location = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
+	vbo_view_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
+	vbo_projection_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
 
-	model_matrix_vbo = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
-	*/
+	vbo_model_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
 
 	if (texture_shader_program <= 0)
 	{
 		fprintf(stderr, "ERROR: could not compile shader_program.");
 		glfwTerminate();
 		return 0;
+	}
+	else {
+		printf("tex vbo_view %i vbo_proj %i vbo_model %i\n", vbo_view_matrix, vbo_projection_matrix, vbo_model_matrix);
 	}
 	
 	if (true) {
@@ -339,7 +292,15 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		window_height
 	);
 
-	texture_load_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));	
+	texture_load_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));
+
+	GLuint vbo_sphere_view_matrix;
+	GLuint vbo_sphere_projection_matrix;
+	GLuint vbo_sphere_model_matrix;
+
+	GLuint vbo_texture_view_matrix;
+	GLuint vbo_texture_projection_matrix;
+	GLuint vbo_texture_model_matrix;
 		
 #pragma region Sphere Geometry and Shaders
 	const int number_of_model_positions = 5;
@@ -350,19 +311,14 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	
 	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES + 1];
 
-	GLuint vao_spheres;
-	GLuint points_vbo;
-	GLuint normals_vbo;
-
-	GLuint view_matrix_vbo;
-	GLuint projection_matrix_vbo;
-	GLuint model_matrix_vbo;
+	GLuint vao_sphere;
+	GLuint vbo_sphere_points;
+	GLuint vbo_sphere_normals;
 
 	int point_count;
-
-	configure_resources_spheres(vao_spheres, points_vbo, normals_vbo, model_matrices, model_positions_world, point_count);
-
-	configure_shaders_spheres(cuda_gl_common, view_matrix_vbo, projection_matrix_vbo, model_matrix_vbo);
+	
+	configure_resources_spheres(vao_sphere, vbo_sphere_points, vbo_sphere_normals, model_matrices, model_positions_world, point_count);
+	configure_shaders_spheres(cuda_gl_common, vbo_sphere_view_matrix, vbo_sphere_projection_matrix, vbo_sphere_model_matrix);
 #pragma endregion
 
 #pragma region Lighting	
@@ -375,13 +331,13 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	const float sphere_radius = 1.0f;
 
-	GLuint lights_vbo;
+	GLuint vbo_lights;
 	GLuint light_block_location = glGetUniformBlockIndex(lighting_shader_program, "light_source");
 
 	int size_of_lights_in_bytes = sizeof(lights);
 		
 	configure_scene_lighting(
-		lights_vbo,
+		vbo_lights,
 		light_block_location,
 		lights,
 		size_of_lights_in_bytes,
@@ -416,27 +372,30 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	*/
 
 	GLuint vao_texture;
-	GLuint tex_triangle_points_vbo;
-	GLuint tex_coords_vbo;
-	
-	int size_of_triangle_points = sizeof(tex_triangle_points);
-	int size_of_tex_triangle_coords = sizeof(tex_triangle_coords);
-
-	configure_resources_texture(
-		vao_texture,
-		tex_triangle_points_vbo,
-		tex_coords_vbo,
-		model_matrices,
-		model_positions_world,
-		tex_triangle_points,
-		size_of_triangle_points,
-		tex_triangle_coords,
-		size_of_tex_triangle_coords
-	);
+	GLuint vbo_texture_triangle_points;
+	GLuint vbo_texture_triangle_coords;
 	
 	GLuint gl_texture = 0;
 
-	configure_shaders_texture(cuda_gl_common, gl_texture, view_matrix_vbo, projection_matrix_vbo, model_matrix_vbo);
+	int size_of_triangle_points = sizeof(tex_triangle_points);
+	int size_of_tex_triangle_coords = sizeof(tex_triangle_coords);
+
+	if (true) {
+
+		configure_resources_texture(
+			vao_texture,
+			vbo_texture_triangle_points,
+			vbo_texture_triangle_coords,
+			model_matrices,
+			model_positions_world,
+			tex_triangle_points,
+			size_of_triangle_points,
+			tex_triangle_coords,
+			size_of_tex_triangle_coords
+		);
+		
+		configure_shaders_texture(cuda_gl_common, gl_texture, vbo_texture_view_matrix, vbo_texture_projection_matrix, vbo_texture_model_matrix);
+	}
 #pragma endregion
 		
 	cuda_gl_common->set_opengl_flags();
@@ -463,18 +422,18 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			// draw spheres
 			if (true) {
 				glUseProgram(lighting_shader_program);
-				glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
-				glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
+				glUniformMatrix4fv(vbo_sphere_view_matrix, 1, GL_FALSE, texture_load_camera.view_matrix.m);
+				glUniformMatrix4fv(vbo_sphere_projection_matrix, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
 
 				// color selected spheres
 				for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
 
-					glUniformMatrix4fv(model_matrix_vbo, 1, GL_FALSE, model_matrices[i].m);
+					glUniformMatrix4fv(vbo_sphere_model_matrix, 1, GL_FALSE, model_matrices[i].m);
 					
-					glBindVertexArray(vao_spheres);
-					glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-					glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-					glBindBuffer(GL_UNIFORM_BUFFER, lights_vbo);
+					glBindVertexArray(vao_sphere);
+					glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_points);
+					glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_normals);
+					glBindBuffer(GL_UNIFORM_BUFFER, vbo_lights);
 
 					glDrawArrays(GL_TRIANGLES, 0, point_count);
 				}
@@ -483,16 +442,16 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			// draw the texture model
 			if (true) {
 				glUseProgram(texture_shader_program);
-				glUniformMatrix4fv(texture_load_camera.view_matrix_location, 1, GL_FALSE, texture_load_camera.view_matrix.m);
-				glUniformMatrix4fv(texture_load_camera.project_matrix_location, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
+				glUniformMatrix4fv(vbo_texture_view_matrix, 1, GL_FALSE, texture_load_camera.view_matrix.m);
+				glUniformMatrix4fv(vbo_texture_projection_matrix, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
 				
 				// This causes this error:
 				// API ERROR HIGH message GL_INVALID_OPERATION error generated. Uniform must be a matrix type in call to UniformMatrix*. userParam -1				
-				// glUniformMatrix4fv(model_matrix_vbo, 1, GL_FALSE, model_matrices[4].m);
+				glUniformMatrix4fv(vbo_texture_model_matrix, 1, GL_FALSE, model_matrices[4].m);
 
 				glBindVertexArray(vao_texture);
-				glBindBuffer(GL_ARRAY_BUFFER, tex_triangle_points_vbo);
-				glBindBuffer(GL_ARRAY_BUFFER, tex_coords_vbo);
+				glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_points);
+				glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_coords);
 				glBindTexture(GL_TEXTURE_2D, gl_texture);
 
 				glDrawArrays(GL_TRIANGLES, 0, 6);
