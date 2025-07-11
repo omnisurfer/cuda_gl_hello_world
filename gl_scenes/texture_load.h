@@ -5,8 +5,11 @@
 #include <cuda_gl_camera.h>
 #include <cuda_gl_lighting.h>
 
-#define TEXTURE_VERTEX_SHADER_FILE "texture_orig_shader.vert"
-#define TEXTURE_FRAGMENT_SHADER_FILE "texture_orig_shader.frag"
+#define TEXTURE_VERTEX_SHADER_FILE "texture_shader.vert"
+#define TEXTURE_FRAGMENT_SHADER_FILE "texture_shader.frag"
+
+#define PHONG_VERTEX_SHADER_FILE "phong_shader.vert"
+#define PHONG_FRAGMENT_SHADER_FILE "phong_shader.frag"
 
 #define TEXTURE_MESH_FILE "3d_objects/sphere.obj"
 
@@ -115,10 +118,10 @@ void configure_resources_spheres(
 int configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &vbo_view_matrix, GLuint &vbo_projection_matrix, GLuint &vbo_model_matrix) {
 
 	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->vertex_shader_file_path.append(TEXTURE_VERTEX_SHADER_FILE);
+	cuda_gl_common->vertex_shader_file_path.append(PHONG_VERTEX_SHADER_FILE);
 
 	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->frag_shader_file_path.append(TEXTURE_FRAGMENT_SHADER_FILE);
+	cuda_gl_common->frag_shader_file_path.append(PHONG_FRAGMENT_SHADER_FILE);
 
 	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
 
@@ -223,10 +226,10 @@ int configure_shaders_texture(
 
 	/* shaders */
 	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->vertex_shader_file_path.append("texture_shader.vert");
+	cuda_gl_common->vertex_shader_file_path.append(TEXTURE_VERTEX_SHADER_FILE);
 
 	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->frag_shader_file_path.append("texture_shader.frag");
+	cuda_gl_common->frag_shader_file_path.append(TEXTURE_FRAGMENT_SHADER_FILE);
 
 	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
 	
@@ -444,9 +447,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glUseProgram(texture_shader_program);
 				glUniformMatrix4fv(vbo_texture_view_matrix, 1, GL_FALSE, texture_load_camera.view_matrix.m);
 				glUniformMatrix4fv(vbo_texture_projection_matrix, 1, GL_FALSE, texture_load_camera.projection_matrix.m);
-				
-				// This causes this error:
-				// API ERROR HIGH message GL_INVALID_OPERATION error generated. Uniform must be a matrix type in call to UniformMatrix*. userParam -1				
+								
 				glUniformMatrix4fv(vbo_texture_model_matrix, 1, GL_FALSE, model_matrices[4].m);
 
 				glBindVertexArray(vao_texture);

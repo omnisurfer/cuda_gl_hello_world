@@ -105,7 +105,7 @@ vec3 CUDAGLUserInput::get_ray_from_mouse_coords(GLFWwindow* window, CUDAGLCamera
 
 void CUDAGLUserInput::scene_key_callback_function(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
-	printf("scene_key_callback_function %i %i %i %i\n", key, scancode, action, mods);
+	// printf("scene_key_callback_function %i %i %i %i\n", key, scancode, action, mods);
 
 	// forward, back, left, right, up, down
 	if (glfwGetKey(window, GLFW_KEY_W)) {
@@ -196,39 +196,39 @@ void CUDAGLUserInput::scene_mouse_button_callback_function(GLFWwindow* window, i
 
 	if (action == GLFW_PRESS) {
 
-		printf("press ");
+		// printf("press ");
 
 		if (button == GLFW_MOUSE_BUTTON_1) {
-			printf("button 1\n");
+			// printf("button 1\n");
 			mouse_button_left = true;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_2) {
-			printf("button 2\n");
+			// printf("button 2\n");
 			mouse_button_right = true;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_3) {
-			printf("button 3\n");
+			// printf("button 3\n");
 			mouse_button_middle = true;
 		}
 	}
 	else if (action == GLFW_RELEASE) {
 
-		printf("relase ");
+		// printf("relase ");
 
 		if (button == GLFW_MOUSE_BUTTON_1) {
-			printf("button 1\n");
+			// printf("button 1\n");
 			mouse_button_left = false;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_2) {
-			printf("button 2\n");
+			// printf("button 2\n");
 			mouse_button_right = false;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_3) {
-			printf("button 3\n");
+			// printf("button 3\n");
 			mouse_button_middle = false;
 		}
 	}
