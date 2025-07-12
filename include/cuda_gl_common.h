@@ -53,35 +53,93 @@ public:
 	/**/
 	bool load_texture(const char* file_name) {
 
-		int x, y, n;
+		int x_img_dimension, y_img_dimension, actual_channels;
 
 		// LOAD UP IMAGE DATA TBD
 		int force_channels = 4;
-		unsigned char* image_data = stbi_load(file_name, &x, &y, &n, force_channels);
+		unsigned char* image_data = stbi_load(file_name, &x_img_dimension, &y_img_dimension, &actual_channels, force_channels);
 
 		if (!image_data) {
 			fprintf(stderr, "ERROR: could not load %s\n", file_name);
 			return false;
 		}
 
+		bool is_power_of_two = true;
+
 		// non-power-of-2 dimensions check, i.e. not square
-		if ((x & (x - 1)) != 0 || (y & (y - 1)) != 0) {
+		if ((x_img_dimension & (x_img_dimension - 1)) != 0 || (y_img_dimension & (y_img_dimension - 1)) != 0) {
 			fprintf(stderr, "WARNING: image %s is not power-of-2 dimensions\n", file_name);
+			is_power_of_two = false;
 		}
 
+		int total_linear_size = x_img_dimension * y_img_dimension * actual_channels;
+
+		unsigned char* translated_image_data = new unsigned char[total_linear_size];
+		// unsigned char translated_image_data[1024];
+
+		//for (int i = 0; i < total_linear_size; i++) {
+		//	translated_image_data[i] = image_data[i];
+		//}
+
+		int translated_image_data_index = 0;
+		
+		if (is_power_of_two && true) {
+
+			// x_img_dimension = 4;
+			// y_img_dimension = 4;
+
+			// from bottom-right coord to top-left coord
+
+			// go through columns - starting bottom-right
+			for (int column_group = total_linear_size - 1; column_group >= total_linear_size - (x_img_dimension * actual_channels); column_group -= actual_channels) {
+				printf("column_group=%i\n", column_group);
+
+				// go through rows - starting bottom to top
+				if (true) {
+					for (int column_group_prime_index = column_group; column_group_prime_index >= 0; column_group_prime_index -= (y_img_dimension * actual_channels)) {
+						printf("column_group_prime_index=%i\n", column_group_prime_index);
+
+						// translated_image_data[translated_image_data_index] = image_data[row];
+						// getting weird image, may need to use different library or pre process...
+
+						for (int column_group_sub_index = column_group_prime_index; column_group_sub_index > column_group_prime_index - actual_channels; column_group_sub_index--) {
+							printf("column_group_sub_index=%i trans_img_data_index=%i\n", column_group_sub_index, translated_image_data_index);
+
+							translated_image_data[translated_image_data_index] = image_data[column_group_sub_index];
+
+							translated_image_data_index++;
+						}
+
+						/*
+						for (int column_group_sub_index = column_group_prime_index - actual_channels; column_group_sub_index < column_group_prime_index; column_group_sub_index++) {
+							printf("column_group_sub_index=%i trans_img_data_index=%i\n", column_group_sub_index, translated_image_data_index);
+
+							translated_image_data[translated_image_data_index] = image_data[column_group_sub_index];
+
+							translated_image_data_index++;
+						}
+						*/
+					}
+				}
+			}
+		}
+				
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
 			GL_RGBA,
-			x,
-			y,
+			x_img_dimension,
+			y_img_dimension,
 			0,
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
-			image_data
-		);
+			translated_image_data
+		);	
 
 		free(image_data);
+		// delete[] translated_image_data;
+
+		// translated_image_data = nullptr;
 
 		return true;
 	}

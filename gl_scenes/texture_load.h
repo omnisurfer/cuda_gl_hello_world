@@ -247,7 +247,7 @@ int configure_shaders_texture(
 		return 0;
 	}
 	else {
-		printf("tex vbo_view %i vbo_proj %i vbo_model %i\n", vbo_view_matrix, vbo_projection_matrix, vbo_model_matrix);
+		// printf("tex vbo_view %i vbo_proj %i vbo_model %i\n", vbo_view_matrix, vbo_projection_matrix, vbo_model_matrix);
 	}
 	
 	if (true) {
@@ -255,7 +255,7 @@ int configure_shaders_texture(
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, gl_texture);
 
-		bool load_texture_ok = cuda_gl_common->load_texture(std::string(texture_map_file_path).append("posz.jpg").c_str());
+		bool load_texture_ok = cuda_gl_common->load_texture(std::string(texture_map_file_path).append("posz_small.png").c_str());
 
 		if (!load_texture_ok) {
 			printf("Texture failed to load properly!\n");
