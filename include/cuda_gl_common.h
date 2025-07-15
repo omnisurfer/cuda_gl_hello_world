@@ -49,8 +49,7 @@ public:
 	}
 
 	GLuint compile_and_link_shader_program_from_files(const char* vertex_shader_filename, const char* fragment_shader_filename);
-
-	/**/
+	
 	bool load_texture(const char* file_name) {
 
 		int x_img_dimension, y_img_dimension, actual_channels;
@@ -70,60 +69,13 @@ public:
 		if ((x_img_dimension & (x_img_dimension - 1)) != 0 || (y_img_dimension & (y_img_dimension - 1)) != 0) {
 			fprintf(stderr, "WARNING: image %s is not power-of-2 dimensions\n", file_name);
 			is_power_of_two = false;
-		}
+		}		
 
+		// TODO Use CUDA to rotate the image instead of relying on a heavier library like OpenCV or roll my own?
 		int total_linear_size = x_img_dimension * y_img_dimension * actual_channels;
 
-		unsigned char* translated_image_data = new unsigned char[total_linear_size];
-		// unsigned char translated_image_data[1024];
-
-		//for (int i = 0; i < total_linear_size; i++) {
-		//	translated_image_data[i] = image_data[i];
-		//}
-
-		int translated_image_data_index = 0;
-		
-		if (is_power_of_two && true) {
-
-			// x_img_dimension = 4;
-			// y_img_dimension = 4;
-
-			// from bottom-right coord to top-left coord
-
-			// go through columns - starting bottom-right
-			for (int column_group = total_linear_size - 1; column_group >= total_linear_size - (x_img_dimension * actual_channels); column_group -= actual_channels) {
-				printf("column_group=%i\n", column_group);
-
-				// go through rows - starting bottom to top
-				if (true) {
-					for (int column_group_prime_index = column_group; column_group_prime_index >= 0; column_group_prime_index -= (y_img_dimension * actual_channels)) {
-						printf("column_group_prime_index=%i\n", column_group_prime_index);
-
-						// translated_image_data[translated_image_data_index] = image_data[row];
-						// getting weird image, may need to use different library or pre process...
-
-						for (int column_group_sub_index = column_group_prime_index; column_group_sub_index > column_group_prime_index - actual_channels; column_group_sub_index--) {
-							printf("column_group_sub_index=%i trans_img_data_index=%i\n", column_group_sub_index, translated_image_data_index);
-
-							translated_image_data[translated_image_data_index] = image_data[column_group_sub_index];
-
-							translated_image_data_index++;
-						}
-
-						/*
-						for (int column_group_sub_index = column_group_prime_index - actual_channels; column_group_sub_index < column_group_prime_index; column_group_sub_index++) {
-							printf("column_group_sub_index=%i trans_img_data_index=%i\n", column_group_sub_index, translated_image_data_index);
-
-							translated_image_data[translated_image_data_index] = image_data[column_group_sub_index];
-
-							translated_image_data_index++;
-						}
-						*/
-					}
-				}
-			}
-		}
-				
+		unsigned char* translated_image_data = new unsigned char[total_linear_size];		
+									
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
@@ -133,15 +85,14 @@ public:
 			0,
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
-			translated_image_data
+			image_data
 		);	
 
 		free(image_data);
-		// delete[] translated_image_data;
-
-		// translated_image_data = nullptr;
+		
+		delete[] translated_image_data;
+		translated_image_data = nullptr;
 
 		return true;
 	}
-	/**/
 };
