@@ -109,5 +109,8 @@
     <CudaCompile Include="kernels\kernel.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
+    <CudaCompile Include="kernels\rotate_image.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

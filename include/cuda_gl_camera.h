@@ -53,7 +53,7 @@ public:
 
 public:
 	CUDAGLCamera() {
-		printf("starting cmaera\n");
+		printf("starting camera\n");
 	}
 	
 	void init_camera();

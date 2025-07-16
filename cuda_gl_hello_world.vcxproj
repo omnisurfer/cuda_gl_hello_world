@@ -122,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="kernels\kernel.cu" />
+    <CudaCompile Include="kernels\rotate_image.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

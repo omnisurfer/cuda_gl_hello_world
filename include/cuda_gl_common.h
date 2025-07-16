@@ -10,7 +10,16 @@
 #define ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/assets/"
 #define THIRD_PARTY_ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/Common/assets/"
 
-extern "C" void debug_gl_callback();
+extern "C" {
+	void debug_gl_callback(
+		GLenum source,
+		GLenum type,
+		GLuint id,
+		GLenum severity,
+		GLsizei length,
+		const GLchar* message,
+		const void* userParam);
+}
 
 class CUDAGLCommon {
 
