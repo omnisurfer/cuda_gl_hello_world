@@ -21,7 +21,13 @@ __global__ void rotateImageKernel(
 	size_t pitch,
 	float angle_radians
 ) {
-	//noop
+	for (int row_index = 0; row_index < y_dimension; ++row_index) {
+		unsigned char* input_row_ptr = input_image_data + row_index * pitch;
+		unsigned char* output_row_ptr = output_image_data + row_index * pitch;
+		for (int column_index = 0; column_index < x_dimension; ++column_index) {
+			output_row_ptr[column_index] = input_row_ptr[column_index];
+		}
+	}	
 }
 
 extern "C" {
@@ -115,20 +121,26 @@ cudaError_t rotateImage(
 
 	/* 
 	- copy input image data from host memory to GPU buffer	
-	- for reference https://stackoverflow.com/questions/16119943/how-and-when-should-i-use-pitched-pointer-with-the-cuda-api
+	- for reference
+		- https://stackoverflow.com/questions/16119943/how-and-when-should-i-use-pitched-pointer-with-the-cuda-api
+		- https://stackoverflow.com/questions/16491232/how-do-i-use-cudamemcpy2d-devicetohost
+
 	*/
+	size_t host_pitch = x_dimension * sizeof(unsigned char); // *stride;
+	size_t x_dimension_in_bytes = host_pitch;
+
 	cuda_status = cudaMemcpy2D(
 		device_input_buffer,
 		device_pitch,
 		input_image_data,
-		x_dimension * sizeof(unsigned char) * stride,
-		x_dimension,
+		host_pitch,
+		x_dimension_in_bytes,
 		y_dimension,
 		cudaMemcpyHostToDevice
 	);
 
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy2D failed!");
+		fprintf(stderr, "cudaMemcpy2D failed: host to device!");
 		goto Error;
 	}
 		
@@ -147,6 +159,22 @@ cudaError_t rotateImage(
 	cuda_status = cudaGetLastError();
 	if (cuda_status != cudaSuccess) {
 		fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(cuda_status));
+		goto Error;
+	}
+
+	// copy memory back to local buffer
+	cuda_status = cudaMemcpy2D(
+		output_image_data,
+		host_pitch,
+		device_output_buffer,
+		device_pitch,
+		x_dimension_in_bytes,
+		y_dimension,
+		cudaMemcpyDeviceToHost
+	);
+
+	if (cuda_status != cudaSuccess) {
+		fprintf(stderr, "cudaMemcpy2D failed: host to device!");
 		goto Error;
 	}
 

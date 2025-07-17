@@ -53,8 +53,14 @@ int main(int arc, char** argvv) {
 		const float rotation_angle_degrees = 90.0;
 		const int image_data_bytes_size = stride * x_dimension * y_dimension;
 
-		const unsigned char input_image_data[image_data_bytes_size] = { 65 };
-		unsigned char output_image_data[image_data_bytes_size] = { 66 };
+		unsigned char input_image_data[image_data_bytes_size];
+		unsigned char output_image_data[image_data_bytes_size];
+
+		// fill with garbage
+		for (int i = 0; i < image_data_bytes_size; i++) {
+			input_image_data[i] = 65 + i;
+			output_image_data[i] = 66;
+		}		
 
 		int success = execute_image_rotation_kernel(
 			input_image_data,
@@ -67,6 +73,16 @@ int main(int arc, char** argvv) {
 
 		if (success > 0) {
 			fprintf(stderr, "Image rotation kernel failed to execute.");
+		}
+
+		// print results for debugging
+		
+		for (int i = 0; i < image_data_bytes_size; i++) {
+
+			if (i > 512)
+				break;
+
+			printf("%i, %u, %u\n", i, input_image_data[i], output_image_data[i]);						
 		}
 
 		// printf("Result 0x%02X\n", output_image_data[0]);
