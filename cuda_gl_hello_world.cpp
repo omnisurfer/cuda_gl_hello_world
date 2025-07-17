@@ -23,8 +23,8 @@
 extern "C" {
 	int execute_kernel();
 	int execute_image_rotation_kernel(
-		const unsigned char* input_image_data,
-		unsigned char* output_image_data,
+		const float* input_image_data,
+		float* output_image_data,
 		int x_dimension,
 		int y_dimension,
 		int stride,
@@ -47,20 +47,21 @@ int main(int arc, char** argvv) {
 
 	if (true) {
 		
-		const int x_dimension = 64;	// 4 RGBA pixels
+		const int x_dimension = 64;	
 		const int y_dimension = 64;
-		const int stride = 4;		// 4 bytes per channel
+		const int stride = 4;		// 4 bytes per channel, RGBA		
 		const float rotation_angle_degrees = 90.0;
-		const int image_data_bytes_size = stride * x_dimension * y_dimension;
+		const int image_data_bytes_size = sizeof(float) * x_dimension * y_dimension;
 
-		unsigned char input_image_data[image_data_bytes_size];
-		unsigned char output_image_data[image_data_bytes_size];
+		// may need to change to float* to represent 4 bytes of RGBA
+		float input_image_data[x_dimension * y_dimension];
+		float output_image_data[x_dimension * y_dimension];		
 
 		// fill with garbage
-		for (int i = 0; i < image_data_bytes_size; i++) {
+		for (int i = 0; i < x_dimension * y_dimension; i++) {
 			input_image_data[i] = 65 + i;
-			output_image_data[i] = 66;
-		}		
+			output_image_data[i] = 0;
+		}
 
 		int success = execute_image_rotation_kernel(
 			input_image_data,
@@ -72,17 +73,16 @@ int main(int arc, char** argvv) {
 		);
 
 		if (success > 0) {
-			fprintf(stderr, "Image rotation kernel failed to execute.");
+			fprintf(stderr, "Image rotation kernel failed to execute.\n");
 		}
 
-		// print results for debugging
-		
-		for (int i = 0; i < image_data_bytes_size; i++) {
+		// print results for debugging		
+		for (int i = 0; i < x_dimension * y_dimension; i++) {
 
-			if (i > 512)
+			if (i > 256)
 				break;
 
-			printf("%i, %u, %u\n", i, input_image_data[i], output_image_data[i]);						
+			printf("%i, %f, %f\n", i, input_image_data[i], output_image_data[i]);
 		}
 
 		// printf("Result 0x%02X\n", output_image_data[0]);

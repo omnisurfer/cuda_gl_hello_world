@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 cudaError_t rotateImage(
-	const unsigned char* input_image_data,
-	unsigned char* output_image_data,
+	const float* input_image_data,
+	float* output_image_data,
 	int x_dimension,
 	int y_dimension,
 	int stride,
@@ -13,19 +13,61 @@ cudaError_t rotateImage(
 );
 
 __global__ void rotateImageKernel(
-	unsigned char* input_image_data, 
-	unsigned char* output_image_data,
+	float* input_image_data, 
+	float* output_image_data,
 	int x_dimension,
 	int y_dimension,
 	int stride,
 	size_t pitch,
 	float angle_radians
 ) {
+
+	/*
+	- reference: https://stackoverflow.com/questions/9833316/cuda-image-rotation
+	*/
+
+	if (false) {
+		printf("block idx/y %u %u, thread idx/y %u %u, blockDim x/y %u %u\n",
+			blockIdx.x,
+			blockIdx.y,
+			threadIdx.x,
+			threadIdx.y,
+			blockDim.x,
+			blockDim.y
+		);
+	}
+
+	int index_i = blockIdx.x * pitch + threadIdx.x;
+	int index_j = blockIdx.y * pitch + threadIdx.y;
+
+	int x_center = x_dimension - x_dimension / 2;
+	int y_center = y_dimension - y_dimension / 2;
+
+	// printf("%u, %u\n", index_i, index_j);
+
 	for (int row_index = 0; row_index < y_dimension; ++row_index) {
-		unsigned char* input_row_ptr = input_image_data + row_index * pitch;
-		unsigned char* output_row_ptr = output_image_data + row_index * pitch;
+				
+		float* input_row_ptr = (float*)((char*)input_image_data + row_index * pitch);
+		float* output_row_ptr = (float*)((char*)output_image_data + row_index * pitch);
+		
 		for (int column_index = 0; column_index < x_dimension; ++column_index) {
-			output_row_ptr[column_index] = input_row_ptr[column_index];
+
+			float modified_value = input_row_ptr[column_index] + 0.5;
+
+			output_row_ptr[column_index] = modified_value; // input_row_ptr[column_index];
+			
+			if (false) {
+				printf("input %f\n", input_row_ptr[column_index]);
+			}
+
+			if (false) {
+				printf("post idx.x %i idx.y %i out %f in %f\n", 
+					index_i, 
+					index_j,					
+					input_row_ptr[column_index], 
+					output_row_ptr[column_index]
+				);
+			}
 		}
 	}	
 }
@@ -33,8 +75,8 @@ __global__ void rotateImageKernel(
 extern "C" {
 
 	int execute_image_rotation_kernel(
-		const unsigned char* input_image_data, 
-		unsigned char* output_image_data,
+		const float* input_image_data, 
+		float* output_image_data,
 		int x_dimension, 
 		int y_dimension, 
 		int stride, 
@@ -51,7 +93,7 @@ extern "C" {
 		);
 
 		if (cuda_status != cudaSuccess) {
-			fprintf(stderr, "rotateImage failed to execute!");
+			fprintf(stderr, "rotateImage failed to execute!\n");
 			return 1;
 		}
 
@@ -59,7 +101,7 @@ extern "C" {
 		// tracing tools such as Nsight and Visual Profiler to show complete traces.
 		cuda_status = cudaDeviceReset();
 		if (cuda_status != cudaSuccess) {
-			fprintf(stderr, "cudaDeviceReset failed!");
+			fprintf(stderr, "cudaDeviceReset failed!\n");
 			return 1;
 		}
 
@@ -68,16 +110,16 @@ extern "C" {
 }
 
 cudaError_t rotateImage(
-	const unsigned char* input_image_data,
-	unsigned char* output_image_data,
+	const float* input_image_data,
+	float* output_image_data,
 	int x_dimension,
 	int y_dimension,
 	int stride,
 	float angle_degrees
 ) {
 	
-	unsigned char* device_input_buffer = 0;
-	unsigned char* device_output_buffer = 0;
+	float* device_input_buffer = 0;
+	float* device_output_buffer = 0;
 	cudaError_t cuda_status;
 
 	float angle_radians = angle_degrees * (3.14 / 180.0);
@@ -85,7 +127,7 @@ cudaError_t rotateImage(
 	// choose GPU
 	cuda_status = cudaSetDevice(0);
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaSetDevice failed! Selected GPU may not be CUDA compatible.");
+		fprintf(stderr, "cudaSetDevice failed! Selected GPU may not be CUDA compatible.\n");
 	}
 
 	
@@ -98,24 +140,24 @@ cudaError_t rotateImage(
 	cuda_status = cudaMallocPitch(
 		&device_input_buffer,
 		&device_pitch,
-		x_dimension * sizeof(unsigned char) * stride,
+		x_dimension * sizeof(float),
 		y_dimension
 	);
 
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaMallocPitch failed!");
+		fprintf(stderr, "cudaMallocPitch failed!\n");
 		goto Error;
 	}
 
 	cuda_status = cudaMallocPitch(
 		&device_output_buffer,
 		&device_pitch,
-		x_dimension * sizeof(unsigned char) * stride,
+		x_dimension * sizeof(float),
 		y_dimension
 	);
 
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaMallocPitch failed!");
+		fprintf(stderr, "cudaMallocPitch failed!\n");
 		goto Error;
 	}
 
@@ -126,7 +168,7 @@ cudaError_t rotateImage(
 		- https://stackoverflow.com/questions/16491232/how-do-i-use-cudamemcpy2d-devicetohost
 
 	*/
-	size_t host_pitch = x_dimension * sizeof(unsigned char); // *stride;
+	size_t host_pitch = x_dimension * sizeof(float);
 	size_t x_dimension_in_bytes = host_pitch;
 
 	cuda_status = cudaMemcpy2D(
@@ -140,7 +182,7 @@ cudaError_t rotateImage(
 	);
 
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy2D failed: host to device!");
+		fprintf(stderr, "cudaMemcpy2D failed, host to device: %s\n", cudaGetErrorString(cuda_status));
 		goto Error;
 	}
 		
@@ -174,7 +216,7 @@ cudaError_t rotateImage(
 	);
 
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy2D failed: host to device!");
+		fprintf(stderr, "cudaMemcpy2D failed: host to device!\n");
 		goto Error;
 	}
 
