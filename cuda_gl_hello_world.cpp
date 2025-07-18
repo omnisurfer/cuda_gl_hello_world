@@ -47,10 +47,10 @@ int main(int arc, char** argvv) {
 
 	if (true) {
 		
-		const int x_dimension = 64;	
-		const int y_dimension = 64;
+		const int x_dimension = 4;	
+		const int y_dimension = 4;
 		const int stride = 4;		// 4 bytes per channel, RGBA		
-		const float rotation_angle_degrees = 90.0;
+		const float rotation_angle_degrees = 180.0;
 		const int image_data_bytes_size = sizeof(float) * x_dimension * y_dimension;
 
 		// may need to change to float* to represent 4 bytes of RGBA
