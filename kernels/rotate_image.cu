@@ -98,9 +98,16 @@ __global__ void rotateImageKernel(
 				
 				if (new_column_index >= 0 && new_column_index < y_dimension) {
 					
-					/**/
-					printf("orig x,y %i %i\tnew x,y %i %i\tnew raw %f %f\n", 
-						row_index, column_index, new_row_index, new_column_index, raw_new_row_index, raw_new_column_index);
+					if (false) {
+						printf("orig x,y %i %i\tnew x,y %i %i\tnew raw %f %f\n",
+							row_index,
+							column_index,
+							new_row_index,
+							new_column_index,
+							raw_new_row_index,
+							raw_new_column_index
+						);
+					}
 					/**/
 
 					output_row_ptr[column_index] = new_input_row_ptr[new_column_index];
@@ -176,7 +183,6 @@ cudaError_t rotateImage(
 	if (cuda_status != cudaSuccess) {
 		fprintf(stderr, "cudaSetDevice failed! Selected GPU may not be CUDA compatible.\n");
 	}
-
 	
 	size_t device_pitch;
 
@@ -265,7 +271,7 @@ cudaError_t rotateImage(
 	);
 
 	if (cuda_status != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy2D failed: host to device!\n");
+		fprintf(stderr, "cudaMemcpy2D failed: device to host!\n");
 		goto Error;
 	}
 

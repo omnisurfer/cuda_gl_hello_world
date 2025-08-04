@@ -129,7 +129,7 @@ public:
 			is_power_of_two = false;
 		}
 
-		number_of_bytes = x_img_dimension * y_img_dimension * implemented_channels * sizeof(float);
+		number_of_bytes = x_img_dimension * y_img_dimension * sizeof(float);
 
 		return is_power_of_two;
 	}

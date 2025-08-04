@@ -95,36 +95,36 @@ int draw_phong_spheres(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	Light lights[number_of_lights];
 
-	lights[0].light_position_world = vec4(0.0, 0.0, 5.0, 1.0);
-	lights[0].Ls = vec4(0.2, 0.2, 0.2, 1.0);
-	lights[0].Ld = vec4(0.7, 0.7, 0.7, 1.0);
-	lights[0].La = vec4(0.1, 0.1, 0.1, 1.0);
+	lights[0].light_position_world = vec4(0.0f, 0.0f, 5.0f, 1.0f);
+	lights[0].Ls = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	lights[0].Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+	lights[0].La = vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
-	lights[0].Ks = vec4(1.0, 1.0, 1.0, 1.0);
-	lights[0].Kd = vec4(1.0, 0.0, 0.0, 1.0);
-	lights[0].Ka = vec4(1.0, 1.0, 1.0, 1.0);
-	lights[0].specular_exponent = 100.0;
+	lights[0].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[0].Kd = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[0].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[0].specular_exponent = 100.0f;
 	
 	/**/
-	lights[1].light_position_world = vec4(0.0, 0.0, -5.0, 1.0);
-	lights[1].Ls = vec4(0.2, 0.2, 0.2, 1.0);
-	lights[1].Ld = vec4(0.7, 0.7, 0.7, 1.0);
-	lights[1].La = vec4(0.1, 0.1, 0.1, 1.0);
+	lights[1].light_position_world = vec4(0.0f, 0.0f, -5.0f, 1.0f);
+	lights[1].Ls = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	lights[1].Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+	lights[1].La = vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
-	lights[1].Ks = vec4(1.0, 1.0, 1.0, 1.0);
-	lights[1].Kd = vec4(0.0, 1.0, 0.0, 1.0);
-	lights[1].Ka = vec4(1.0, 1.0, 1.0, 1.0);
-	lights[1].specular_exponent = 100.0;
+	lights[1].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[1].Kd = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	lights[1].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[1].specular_exponent = 100.0f;
 
-	lights[2].light_position_world = vec4(0.0, 5.0, 0.0, 1.0);
-	lights[2].Ls = vec4(0.2, 0.2, 0.2, 1.0);
-	lights[2].Ld = vec4(0.7, 0.7, 0.7, 1.0);
-	lights[2].La = vec4(0.1, 0.1, 0.1, 1.0);
+	lights[2].light_position_world = vec4(0.0f, 5.0f, 0.0f, 1.0f);
+	lights[2].Ls = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	lights[2].Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+	lights[2].La = vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
-	lights[2].Ks = vec4(1.0, 1.0, 1.0, 1.0);
-	lights[2].Kd = vec4(0.0, 0.0, 1.0, 1.0);
-	lights[2].Ka = vec4(1.0, 1.0, 1.0, 1.0);
-	lights[2].specular_exponent = 100.0;
+	lights[2].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[2].Kd = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	lights[2].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[2].specular_exponent = 100.0f;
 	/**/
 
 	const float sphere_radius = 1.0f;
