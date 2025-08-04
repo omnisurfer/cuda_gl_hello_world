@@ -45,8 +45,11 @@ int main(int arc, char** argvv) {
 		execute_kernel();
 	}
 
+	/*
+	* IMAGE ROTATION DEBUGGING
+	*/
 	if (true) {
-		
+				
 		const int x_dimension = 4;	
 		const int y_dimension = 4;
 		const int stride = 4;		// 4 bytes per channel, RGBA		
@@ -137,7 +140,7 @@ int main(int arc, char** argvv) {
 		draw_phong_spheres(window, &cuda_gl_common);
 	}
 
-	if (false) {
+	if (true) {
 		
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
