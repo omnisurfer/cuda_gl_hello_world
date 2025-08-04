@@ -61,47 +61,19 @@ public:
 	
 	bool load_texture_into_device_memory(const char* file_name) {
 
-		int x_img_dimension = 0, y_img_dimension = 0, implemented_channels = 0;
-		unsigned char* image_data = NULL;
-
-		if (false) {
-			// LOAD UP IMAGE DATA TBD
-			int force_channels = 4;
-			image_data = stbi_load(file_name, &x_img_dimension, &y_img_dimension, &implemented_channels, force_channels);
-
-			if (!image_data) {
-				fprintf(stderr, "ERROR: could not load %s\n", file_name);
-				return false;
-			}
-
-			bool is_power_of_two = true;
-
-			// non-power-of-2 dimensions check, i.e. not square
-			if ((x_img_dimension & (x_img_dimension - 1)) != 0 || (y_img_dimension & (y_img_dimension - 1)) != 0) {
-				fprintf(stderr, "WARNING: image %s is not power-of-2 dimensions\n", file_name);
-				is_power_of_two = false;
-			}
-		}
-		else {
-
-			int number_of_bytes = 0;
+		int x_img_dimension = 0, y_img_dimension = 0, implemented_channels = 0, number_of_bytes = 0;
+		unsigned char* image_data = NULL;		
 			
-			bool image_read_ok = read_in_texture_to_memory(
-				file_name,
-				image_data,
-				x_img_dimension,
-				y_img_dimension,
-				implemented_channels,
-				number_of_bytes
-			);
-
-			if (!image_read_ok) {
-				fprintf(stderr, "ERROR: failed to load %s\n", file_name);
-				return false;
-			}
-		}
-
-		if (!image_data) {
+		bool image_read_ok = read_in_texture_to_memory(
+			file_name,
+			image_data,
+			x_img_dimension,
+			y_img_dimension,
+			implemented_channels,
+			number_of_bytes
+		);
+			
+		if (!image_read_ok) {
 			fprintf(stderr, "ERROR: could not load %s\n", file_name);
 			return false;
 		}
