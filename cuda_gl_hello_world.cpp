@@ -44,7 +44,7 @@ int main(int arc, char** argvv) {
 
 	printf("Starting cuda_gl_hello_world\n");
 		
-	if (true) {
+	if (false) {
 		execute_kernel();
 	}
 
@@ -64,7 +64,7 @@ int main(int arc, char** argvv) {
 		int implemented_channels = 0;
 		int number_of_bytes = 0;
 		const int stride = 4;		// 4 bytes per channel, RGBA, a float		
-		const float rotation_angle_degrees = 77.0;
+		const float rotation_angle_degrees = 123.0;
 		// const int image_data_bytes_size = sizeof(float) * x_dimension * y_dimension;
 
 		unsigned char* input_image_data = NULL;
@@ -96,26 +96,17 @@ int main(int arc, char** argvv) {
 			fprintf(stderr, "Image rotation kernel failed to execute.\n");
 		}
 
-		// print results for debugging
-		if (false) {
-			for (int i = 0; i < x_img_dimension * y_img_dimension; i++) {
-
-				if (i > 256)
-					break;
-
-				printf("%i, %f, %f\n", i, (float)input_image_data[i], (float)output_image_data[i]);
-			}
-		}
-
 		// Write out the image
-		stbi_write_png(
-			"output_77.png",
-			x_img_dimension, 
-			y_img_dimension, 
-			implemented_channels, 
-			output_image_data, 
-			y_img_dimension * implemented_channels
-		);
+		if (false) {
+			stbi_write_png(
+				"output_123.png",
+				x_img_dimension,
+				y_img_dimension,
+				implemented_channels,
+				output_image_data,
+				y_img_dimension * implemented_channels
+			);
+		}
 
 		delete[] output_image_data;
 		output_image_data = nullptr;

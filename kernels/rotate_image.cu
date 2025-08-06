@@ -21,7 +21,7 @@ __global__ void rotateImageKernel(
 	int x_dimension,
 	int y_dimension,
 	int stride,
-	size_t pitch,
+	int pitch,
 	float angle_radians
 ) {
 
@@ -29,101 +29,162 @@ __global__ void rotateImageKernel(
 	- reference: https://stackoverflow.com/questions/9833316/cuda-image-rotation
 	*/
 
-	if (false) {
-		printf("block idx/y %u %u, thread idx/y %u %u, blockDim x/y %u %u\n",
-			blockIdx.x,
-			blockIdx.y,
-			threadIdx.x,
-			threadIdx.y,
-			blockDim.x,
-			blockDim.y
-		);
-	}
+	// pitch = thread per block
 	
-	int index_i = blockIdx.x * pitch + threadIdx.x;
-	int index_j = blockIdx.y * pitch + threadIdx.y;
+	int addressed_x_memory_per_block = x_dimension / blockDim.x; // 2048/8 = 256
+	int addressed_x_memory_per_thread = addressed_x_memory_per_block / pitch; // 256/16 = 16
+
+	int index_x_block_pitch_offset = blockIdx.x * addressed_x_memory_per_block;
+	int index_x_thread_pitch_offset = threadIdx.x * addressed_x_memory_per_thread;
+
+	int block_index_x_pitch_offset = blockIdx.x * pitch; // 0 * 16 = 0, 1 * 16 = 16, 2 * 16 = 32...
+	int block_index_y_pitch_offset = blockIdx.y * pitch;
+
+	int index_i = threadIdx.x + block_index_x_pitch_offset;
+	int index_j = threadIdx.y + block_index_y_pitch_offset;
+
+	// likely only 1D or 2D
+	int block_dim_x = blockDim.x;
+	int block_dim_y = blockDim.y;
 
 	int x_center = x_dimension - x_dimension / 2;
 	int y_center = y_dimension - y_dimension / 2;
-		
-	for (int row_index = 0; row_index < y_dimension; ++row_index) {
-								
-		for (int column_index = 0; column_index < x_dimension; ++column_index) {
 
-			/* unmodified row pointers output_row_ptr indexes unmodified */
-			float* input_row_ptr = (float*)((char*)input_image_data + row_index * pitch);
-			float* output_row_ptr = (float*)((char*)output_image_data + row_index * pitch);
-			
-			float raw_new_column_index = ((float)column_index - x_center) * cos(angle_radians) - ((float)row_index - y_center) * sin(angle_radians) + x_center;
-			
-			if (raw_new_column_index < 1) {
-				raw_new_column_index = 0;
-			}
-			
-			int new_column_index = int(round(raw_new_column_index));
+	/*
+	printf("block-threadIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
+		blockIdx.x, blockIdx.y,
+		threadIdx.x, threadIdx.y,				
+		index_i, index_j,
+		block_dim_x, block_dim_y,
+		stride, pitch	
+	);
+	*/
 
-			// clamp new_column_index
-			if (new_column_index < 1)
-			{
-				new_column_index = 0;
-			}
-			else if (new_column_index > x_dimension - 1)
-			{
-				new_column_index = x_dimension - 1;
-			}
+	// printf("x_dim y_dim %i %i\n", x_dimension, y_dimension);
 
-			float raw_new_row_index = ((float)column_index - x_center) * sin(angle_radians) + ((float)row_index - y_center) * cos(angle_radians) + y_center;
-			
-			if (raw_new_row_index < 1)
-			{
-				raw_new_row_index = 0;
-			}
+	if (true) {
 
-			int new_row_index = int(round(raw_new_row_index));
+		// row processing
+		if (blockIdx.x == 0) {
+			if (threadIdx.x == 0) {
+				int index_i_block_level = threadIdx.x + index_x_block_pitch_offset;
+				int index_i_thread_level = index_i_block_level + index_x_thread_pitch_offset;
 
-			// clamp new_row_index
-			if (new_row_index < 1)
-			{
-				new_row_index = 0;
-			}
-			else if (new_row_index > y_dimension - 1)
-			{
-				new_row_index = y_dimension - 1;
-			}
-
-			/* input_row_ptr must point to where I want to read a pixel from after transform */
-			float* new_input_row_ptr = (float*)((char*)input_image_data + new_row_index * pitch);
-
-			if (true) {
-				
-				if (new_column_index >= 0 && new_column_index < y_dimension) {
-					
-					if (false) {
-						printf("orig x,y %i %i\tnew x,y %i %i\tnew raw %f %f\n",
-							row_index,
-							column_index,
-							new_row_index,
-							new_column_index,
-							raw_new_row_index,
-							raw_new_column_index
-						);
-					}
-					/**/
-
-					output_row_ptr[column_index] = new_input_row_ptr[new_column_index];
-				}
-			}			
-
-			if (false) {
-				printf("post idx.x %i idx.y %i out %f in %f\n", 
-					index_i, 
-					index_j,					
-					input_row_ptr[column_index], 
-					output_row_ptr[column_index]
+				/*
+				printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
+					threadIdx.x, threadIdx.y,
+					blockIdx.x, blockIdx.y,
+					index_i, index_j,
+					block_dim_x, block_dim_y,
+					stride, pitch
 				);
+				*/
+
+				printf("threadId.x %i index_i_block_level/thread_level %i %i\n", threadIdx.x, index_i_block_level, index_i_thread_level);
+			}
+			else if (threadIdx.x == 1) {
+				int index_i_block_level = threadIdx.x + index_x_block_pitch_offset;
+				int index_i_thread_level = index_i_block_level + index_x_thread_pitch_offset;
+
+				/*
+				printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
+					threadIdx.x, threadIdx.y,
+					blockIdx.x, blockIdx.y,
+					index_i, index_j,
+					block_dim_x, block_dim_y,
+					stride, pitch
+				);
+				*/
+
+				printf("threadId.x %i index_i_block_level/thread_level %i %i\n", threadIdx.x, index_i_block_level, index_i_thread_level);
 			}
 		}
-	}	
+	}
+	// OLD Loop based rotation but does work. just very slow...
+	else if (false) {
+		
+		for (int row_index = 0; row_index < y_dimension; ++row_index) {
+
+			for (int column_index = 0; column_index < x_dimension; ++column_index) {
+
+				/* unmodified row pointers output_row_ptr indexes unmodified */
+				float* input_row_ptr = (float*)((char*)input_image_data + row_index * pitch);
+				float* output_row_ptr = (float*)((char*)output_image_data + row_index * pitch);
+
+				float raw_new_column_index = ((float)column_index - x_center) * cos(angle_radians) - ((float)row_index - y_center) * sin(angle_radians) + x_center;
+
+				if (raw_new_column_index < 1) {
+					raw_new_column_index = 0;
+				}
+
+				int new_column_index = int(round(raw_new_column_index));
+
+				// clamp new_column_index
+				if (new_column_index < 1)
+				{
+					new_column_index = 0;
+				}
+				else if (new_column_index > x_dimension - 1)
+				{
+					new_column_index = x_dimension - 1;
+				}
+
+				float raw_new_row_index = ((float)column_index - x_center) * sin(angle_radians) + ((float)row_index - y_center) * cos(angle_radians) + y_center;
+
+				if (raw_new_row_index < 1)
+				{
+					raw_new_row_index = 0;
+				}
+
+				int new_row_index = int(round(raw_new_row_index));
+
+				// clamp new_row_index
+				if (new_row_index < 1)
+				{
+					new_row_index = 0;
+				}
+				else if (new_row_index > y_dimension - 1)
+				{
+					new_row_index = y_dimension - 1;
+				}
+
+				/* input_row_ptr must point to where I want to read a pixel from after transform */
+				float* new_input_row_ptr = (float*)((char*)input_image_data + new_row_index * pitch);
+
+				if (true) {
+
+					if (new_column_index >= 0 && new_column_index < y_dimension) {
+
+						/*
+						if (false) {
+							printf("orig x,y %i %i\tnew x,y %i %i\tnew raw %f %f\n",
+								row_index,
+								column_index,
+								new_row_index,
+								new_column_index,
+								raw_new_row_index,
+								raw_new_column_index
+							);
+						}
+						*/
+
+						output_row_ptr[column_index] = new_input_row_ptr[new_column_index];
+					}
+				}
+
+				/*
+				if (false) {
+					printf("post idx.x %i idx.y %i out %f in %f\n",
+						index_i,
+						index_j,
+						input_row_ptr[column_index],
+						output_row_ptr[column_index]
+					);
+				}
+				*/
+			}
+		}
+	}
 }
 
 extern "C" {
@@ -239,16 +300,23 @@ cudaError_t rotateImage(
 		goto Error;
 	}
 	
-	int compute_pitch = 1; // device_pitch;
+	int block_size = 8; //86 for RTX 3090
+	size_t compute_pitch = device_pitch; // 8192 from getpitch() call, i.e. threads per block
+	compute_pitch = 16;
 
 	// launch kernel
-	rotateImageKernel<<<1, compute_pitch>>>(
+	// https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#execution-configuration
+	printf("launching with block, stride, c-d-h_pitch %i-b %i-s %i-c %i-d %i-h\n", 
+		block_size, stride, compute_pitch, device_pitch, host_pitch
+	);
+	printf("x_dim, y_dim %i %i\n", x_dimension, y_dimension);
+	rotateImageKernel<<<block_size, compute_pitch>>>(
 		device_input_buffer, 
 		device_output_buffer,
 		x_dimension, 
 		y_dimension, 
 		stride, 
-		device_pitch, 
+		compute_pitch,
 		angle_radians
 		);
 
