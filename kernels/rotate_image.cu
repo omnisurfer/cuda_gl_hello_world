@@ -15,12 +15,37 @@ cudaError_t rotateImage(
 	float angle_degrees	
 );
 
+__device__ void print_thread_details(int block_start_index, int thread_start_index) {
+	
+	printf("blockIdx.x %i threadId.x %i block_start_index %i thread_startIdx %i\n",
+		blockIdx.x,
+		threadIdx.x,
+		block_start_index,
+		thread_start_index
+	);
+
+	/*
+	printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
+		threadIdx.x, threadIdx.y,
+		blockIdx.x, blockIdx.y,
+		index_i, index_j,
+		block_dim_x, block_dim_y,
+		stride, pitch
+	);
+	*/
+}
+
+__device__ void update_memory_location(int row_index, int column_index) {
+
+}
+
 __global__ void rotateImageKernel(
 	float* input_image_data, 
 	float* output_image_data,
 	int x_dimension,
 	int y_dimension,
 	int stride,
+	int block_size,
 	int pitch,
 	float angle_radians
 ) {
@@ -29,15 +54,14 @@ __global__ void rotateImageKernel(
 	- reference: https://stackoverflow.com/questions/9833316/cuda-image-rotation
 	*/
 
-	// pitch = thread per block
-	
-	int addressed_x_memory_per_block = x_dimension / blockDim.x; // 2048/8 = 256
-	int addressed_x_memory_per_thread = addressed_x_memory_per_block / pitch; // 256/16 = 16
+	// pitch = thread per block		
+	int index_x_addressed_memory_per_block = x_dimension / block_size; // 2048/8 = 256
+	int index_x_addressed_memory_per_thread = index_x_addressed_memory_per_block / pitch; // 256/16 = 16
 
-	int index_x_block_pitch_offset = blockIdx.x * addressed_x_memory_per_block;
-	int index_x_thread_pitch_offset = threadIdx.x * addressed_x_memory_per_thread;
+	int index_x_block_pitch_offset = blockIdx.x * index_x_addressed_memory_per_block;
+	int index_x_thread_pitch_offset = threadIdx.x * index_x_addressed_memory_per_thread;
 
-	int block_index_x_pitch_offset = blockIdx.x * pitch; // 0 * 16 = 0, 1 * 16 = 16, 2 * 16 = 32...
+	int block_index_x_pitch_offset = blockIdx.x * pitch; // 0 * 8 = 0, 1 * 8 = 8, 2 * 8 = 16...
 	int block_index_y_pitch_offset = blockIdx.y * pitch;
 
 	int index_i = threadIdx.x + block_index_x_pitch_offset;
@@ -51,53 +75,36 @@ __global__ void rotateImageKernel(
 	int y_center = y_dimension - y_dimension / 2;
 
 	/*
-	printf("block-threadIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
-		blockIdx.x, blockIdx.y,
-		threadIdx.x, threadIdx.y,				
-		index_i, index_j,
-		block_dim_x, block_dim_y,
-		stride, pitch	
-	);
+	x_dim, y_dim 2048 2048
+	dim.xy 2048 2048 stride-block_size-pitch 4 8 16
 	*/
-
-	// printf("x_dim y_dim %i %i\n", x_dimension, y_dimension);
+	// printf("dim.xy %i %i stride-block_size-pitch %i %i %i\n", x_dimension, y_dimension, stride, block_size, pitch);
 
 	if (true) {
 
-		// row processing
-		if (blockIdx.x == 0) {
-			if (threadIdx.x == 0) {
-				int index_i_block_level = threadIdx.x + index_x_block_pitch_offset;
-				int index_i_thread_level = index_i_block_level + index_x_thread_pitch_offset;
+		// row processing		
+		int thread_start_index = index_x_block_pitch_offset + index_x_thread_pitch_offset;
+			
+		// print_thread_details(0, thread_start_index);
 
-				/*
-				printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
-					threadIdx.x, threadIdx.y,
-					blockIdx.x, blockIdx.y,
-					index_i, index_j,
-					block_dim_x, block_dim_y,
-					stride, pitch
-				);
-				*/
+		// loop through this threads memory section
+		if (true) {
+			y_dimension = 2;
+			for (int row_index = 0; row_index < y_dimension; ++row_index) {
+				
+				// for (int column_index = 0; column_index < x_dimension; ++column_index) {
 
-				printf("threadId.x %i index_i_block_level/thread_level %i %i\n", threadIdx.x, index_i_block_level, index_i_thread_level);
-			}
-			else if (threadIdx.x == 1) {
-				int index_i_block_level = threadIdx.x + index_x_block_pitch_offset;
-				int index_i_thread_level = index_i_block_level + index_x_thread_pitch_offset;
-
-				/*
-				printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
-					threadIdx.x, threadIdx.y,
-					blockIdx.x, blockIdx.y,
-					index_i, index_j,
-					block_dim_x, block_dim_y,
-					stride, pitch
-				);
-				*/
-
-				printf("threadId.x %i index_i_block_level/thread_level %i %i\n", threadIdx.x, index_i_block_level, index_i_thread_level);
-			}
+				// }
+				for (int column_index = thread_start_index; column_index < thread_start_index + index_x_addressed_memory_per_thread; ++column_index) {
+					printf("blockIdx.x %i threadIdx.x %i row-Idx %i memory/column_index %i thread_start_index %i\n", 
+						blockIdx.x, 
+						threadIdx.x,
+						row_index,
+						column_index,
+						thread_start_index
+					);
+				}
+			}			
 		}
 	}
 	// OLD Loop based rotation but does work. just very slow...
@@ -315,7 +322,8 @@ cudaError_t rotateImage(
 		device_output_buffer,
 		x_dimension, 
 		y_dimension, 
-		stride, 
+		stride,
+		block_size,
 		compute_pitch,
 		angle_radians
 		);
