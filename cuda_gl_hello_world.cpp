@@ -7,6 +7,8 @@
 
 #include <cuda_gl_common.h>
 
+#include <string>
+
 // scenes from the book
 #include "template_scene.h"
 #include "simple_triangle.h"
@@ -64,7 +66,7 @@ int main(int arc, char** argvv) {
 		int implemented_channels = 0;
 		int number_of_bytes = 0;
 		const int stride = 4;		// 4 bytes per channel, RGBA, a float		
-		const float rotation_angle_degrees = 123.0;
+		const float rotation_angle_degrees = 138.0;
 		// const int image_data_bytes_size = sizeof(float) * x_dimension * y_dimension;
 
 		unsigned char* input_image_data = NULL;
@@ -96,10 +98,13 @@ int main(int arc, char** argvv) {
 			fprintf(stderr, "Image rotation kernel failed to execute.\n");
 		}
 
+		std::string _file_name = "rotate_output_angle_" + std::to_string(rotation_angle_degrees) + "deg.png";
+		const char* c_file_name = _file_name.c_str();
+
 		// Write out the image
-		if (false) {
+		if (true) {
 			stbi_write_png(
-				"output_123.png",
+				c_file_name,
 				x_img_dimension,
 				y_img_dimension,
 				implemented_channels,

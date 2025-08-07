@@ -25,12 +25,12 @@ __device__ void print_thread_details(int block_start_index, int thread_start_ind
 	);
 
 	/*
-	printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-pitch %i %i\n",
+	printf("thread-blockIdx.xy %i %i %i %i index.ij %i %i blockDim.xy %i %i stride-device_pitch %i %i\n",
 		threadIdx.x, threadIdx.y,
 		blockIdx.x, blockIdx.y,
 		index_i, index_j,
 		block_dim_x, block_dim_y,
-		stride, pitch
+		stride, device_pitch
 	);
 	*/
 }
@@ -46,77 +46,53 @@ __global__ void rotateImageKernel(
 	int y_dimension,
 	int stride,
 	int block_size,
-	int pitch,
+	int compute_pitch,
+	int device_pitch,
 	float angle_radians
 ) {
-
-	/*
-	- reference: https://stackoverflow.com/questions/9833316/cuda-image-rotation
-	*/
-
-	// pitch = thread per block		
-	int index_x_addressed_memory_per_block = x_dimension / block_size; // 2048/8 = 256
-	int index_x_addressed_memory_per_thread = index_x_addressed_memory_per_block / pitch; // 256/16 = 16
-
-	int index_x_block_pitch_offset = blockIdx.x * index_x_addressed_memory_per_block;
-	int index_x_thread_pitch_offset = threadIdx.x * index_x_addressed_memory_per_thread;
-
-	int block_index_x_pitch_offset = blockIdx.x * pitch; // 0 * 8 = 0, 1 * 8 = 8, 2 * 8 = 16...
-	int block_index_y_pitch_offset = blockIdx.y * pitch;
-
-	int index_i = threadIdx.x + block_index_x_pitch_offset;
-	int index_j = threadIdx.y + block_index_y_pitch_offset;
-
-	// likely only 1D or 2D
-	int block_dim_x = blockDim.x;
-	int block_dim_y = blockDim.y;
 
 	int x_center = x_dimension - x_dimension / 2;
 	int y_center = y_dimension - y_dimension / 2;
 
-	/*
-	x_dim, y_dim 2048 2048
-	dim.xy 2048 2048 stride-block_size-pitch 4 8 16
-	*/
-	// printf("dim.xy %i %i stride-block_size-pitch %i %i %i\n", x_dimension, y_dimension, stride, block_size, pitch);
-
+	// printf("dim.xy %i %i stride-block_size-device_pitch %i %i %i\n", x_dimension, y_dimension, stride, block_size, device_pitch);	 
 	if (true) {
+
+		/*
+		* Better way that actually parallelizes the rotation work...
+		* x_dim, y_dim 2048 2048
+		* dim.xy 2048 2048 stride-block_size-device_pitch 4 8 16
+		*/
+
+		// device_pitch = thread per block		
+		int index_x_addressed_memory_per_block = x_dimension / block_size; // 2048/8=256 2048/64=32
+		int index_x_addressed_memory_per_thread = index_x_addressed_memory_per_block / compute_pitch; // 256/16=16 32/16=2
+
+		int index_x_block_pitch_offset = blockIdx.x * index_x_addressed_memory_per_block;
+		int index_x_thread_pitch_offset = threadIdx.x * index_x_addressed_memory_per_thread;
 
 		// row processing		
 		int thread_start_index = index_x_block_pitch_offset + index_x_thread_pitch_offset;
 			
 		// print_thread_details(0, thread_start_index);
 
-		// loop through this threads memory section
-		if (true) {
-			y_dimension = 2;
-			for (int row_index = 0; row_index < y_dimension; ++row_index) {
-				
-				// for (int column_index = 0; column_index < x_dimension; ++column_index) {
-
-				// }
-				for (int column_index = thread_start_index; column_index < thread_start_index + index_x_addressed_memory_per_thread; ++column_index) {
-					printf("blockIdx.x %i threadIdx.x %i row-Idx %i memory/column_index %i thread_start_index %i\n", 
-						blockIdx.x, 
-						threadIdx.x,
-						row_index,
-						column_index,
-						thread_start_index
-					);
-				}
-			}			
-		}
-	}
-	// OLD Loop based rotation but does work. just very slow...
-	else if (false) {
-		
+		// loop through this threads memory section		
+		// y_dimension = 10;
 		for (int row_index = 0; row_index < y_dimension; ++row_index) {
+							
+			// printf("column-threadStrartIdx: %i %i\n", thread_start_index, index_x_addressed_memory_per_thread);
+			for (int column_index = thread_start_index; column_index < thread_start_index + index_x_addressed_memory_per_thread; ++column_index) {
+					
+				/*
+				printf("blockIdx.x %i threadIdx.x %i row-Idx %i memory/column_index %i thread_start_index %i\n", 
+					blockIdx.x, 
+					threadIdx.x,
+					row_index,
+					column_index,
+					thread_start_index
+				);
+				*/
 
-			for (int column_index = 0; column_index < x_dimension; ++column_index) {
-
-				/* unmodified row pointers output_row_ptr indexes unmodified */
-				float* input_row_ptr = (float*)((char*)input_image_data + row_index * pitch);
-				float* output_row_ptr = (float*)((char*)output_image_data + row_index * pitch);
+				float* output_row_ptr = (float*)((char*)output_image_data + row_index * device_pitch);
 
 				float raw_new_column_index = ((float)column_index - x_center) * cos(angle_radians) - ((float)row_index - y_center) * sin(angle_radians) + x_center;
 
@@ -156,7 +132,73 @@ __global__ void rotateImageKernel(
 				}
 
 				/* input_row_ptr must point to where I want to read a pixel from after transform */
-				float* new_input_row_ptr = (float*)((char*)input_image_data + new_row_index * pitch);
+				float* new_input_row_ptr = (float*)((char*)input_image_data + new_row_index * device_pitch);
+					
+				// printf("A writing too r/c %i %i y_dim %i\n", column_index, new_column_index, y_dimension);
+
+				if (new_column_index >= 0 && new_column_index < y_dimension) {							
+
+					// printf("B writing too r/c %i %i\n", column_index, new_column_index);
+
+					output_row_ptr[column_index] = new_input_row_ptr[new_column_index];
+				}
+			}					
+		}
+	}
+	else {
+
+		/*
+		* OLD Loop based rotation. Does work, but very slow since it basically just runs on a single core
+		* - reference: https://stackoverflow.com/questions/9833316/cuda-image-rotation
+		*/
+
+		for (int row_index = 0; row_index < y_dimension; ++row_index) {
+
+			for (int column_index = 0; column_index < x_dimension; ++column_index) {
+
+				/* unmodified row pointers output_row_ptr indexes unmodified */
+				float* input_row_ptr = (float*)((char*)input_image_data + row_index * device_pitch);
+				float* output_row_ptr = (float*)((char*)output_image_data + row_index * device_pitch);
+
+				float raw_new_column_index = ((float)column_index - x_center) * cos(angle_radians) - ((float)row_index - y_center) * sin(angle_radians) + x_center;
+
+				if (raw_new_column_index < 1) {
+					raw_new_column_index = 0;
+				}
+
+				int new_column_index = int(round(raw_new_column_index));
+
+				// clamp new_column_index
+				if (new_column_index < 1)
+				{
+					new_column_index = 0;
+				}
+				else if (new_column_index > x_dimension - 1)
+				{
+					new_column_index = x_dimension - 1;
+				}
+
+				float raw_new_row_index = ((float)column_index - x_center) * sin(angle_radians) + ((float)row_index - y_center) * cos(angle_radians) + y_center;
+
+				if (raw_new_row_index < 1)
+				{
+					raw_new_row_index = 0;
+				}
+
+				int new_row_index = int(round(raw_new_row_index));
+
+				// clamp new_row_index
+				if (new_row_index < 1)
+				{
+					new_row_index = 0;
+				}
+				else if (new_row_index > y_dimension - 1)
+				{
+					new_row_index = y_dimension - 1;
+				}
+
+				/* input_row_ptr must point to where I want to read a pixel from after transform */
+				float* new_input_row_ptr = (float*)((char*)input_image_data + new_row_index * device_pitch);
 
 				if (true) {
 
@@ -177,18 +219,7 @@ __global__ void rotateImageKernel(
 
 						output_row_ptr[column_index] = new_input_row_ptr[new_column_index];
 					}
-				}
-
-				/*
-				if (false) {
-					printf("post idx.x %i idx.y %i out %f in %f\n",
-						index_i,
-						index_j,
-						input_row_ptr[column_index],
-						output_row_ptr[column_index]
-					);
-				}
-				*/
+				}				
 			}
 		}
 	}
@@ -307,9 +338,9 @@ cudaError_t rotateImage(
 		goto Error;
 	}
 	
-	int block_size = 8; //86 for RTX 3090
+	int block_size = 64; //8; //86 for RTX 3090
 	size_t compute_pitch = device_pitch; // 8192 from getpitch() call, i.e. threads per block
-	compute_pitch = 16;
+	compute_pitch = 32;
 
 	// launch kernel
 	// https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#execution-configuration
@@ -325,6 +356,7 @@ cudaError_t rotateImage(
 		stride,
 		block_size,
 		compute_pitch,
+		device_pitch,
 		angle_radians
 		);
 
