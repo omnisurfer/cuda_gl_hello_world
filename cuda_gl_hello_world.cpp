@@ -53,7 +53,7 @@ int main(int arc, char** argvv) {
 	/*
 	* IMAGE ROTATION DEBUGGING
 	*/
-	if (true) {
+	if (false) {
 				
         // TODO: Clean this up
 		std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
@@ -67,7 +67,6 @@ int main(int arc, char** argvv) {
 		int number_of_bytes = 0;
 		const int stride = 4;		// 4 bytes per channel, RGBA, a float		
 		const float rotation_angle_degrees = 138.0;
-		// const int image_data_bytes_size = sizeof(float) * x_dimension * y_dimension;
 
 		unsigned char* input_image_data = NULL;
 		unsigned char* output_image_data = NULL;
@@ -115,7 +114,6 @@ int main(int arc, char** argvv) {
 
 		delete[] output_image_data;
 		output_image_data = nullptr;
-		// printf("Result 0x%02X\n", output_image_data[0]);
 	}
 
 	if (false) {
@@ -167,7 +165,7 @@ int main(int arc, char** argvv) {
 		draw_phong_spheres(window, &cuda_gl_common);
 	}
 
-	if (false) {
+	if (true) {
 		
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

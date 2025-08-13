@@ -12,6 +12,7 @@
 #define PHONG_FRAGMENT_SHADER_FILE "phong_shader.frag"
 
 #define TEXTURE_MESH_FILE "3d_objects/sphere.obj"
+#define MULTI_MESH_MESH_FILE "3d_objects/cube.obj"
 
 #define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
 
@@ -375,9 +376,11 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	* https://stackoverflow.com/questions/14249634/opengl-vaos-and-multiple-buffers
 	*/
 
-	GLuint vao_texture;
+	GLuint vao_texture_triangle;
 	GLuint vbo_texture_triangle_points;
 	GLuint vbo_texture_triangle_coords;
+	// TBD for triangle normals.
+	GLuint vbo_texture_triangle_normals;
 	
 	GLuint gl_texture = 0;
 
@@ -387,7 +390,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	if (true) {
 
 		configure_resources_texture(
-			vao_texture,
+			vao_texture_triangle,
 			vbo_texture_triangle_points,
 			vbo_texture_triangle_coords,
 			model_matrices,
@@ -400,14 +403,19 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		
 		configure_shaders_texture(cuda_gl_common, gl_texture, vbo_texture_view_matrix, vbo_texture_projection_matrix, vbo_texture_model_matrix);
 	}
+
+	// render a second mesh here
+	GLuint vao_monkey;
+	GLuint vbo_monkey_points;
+	GLuint vbo_monkey_normals;
+
+
 #pragma endregion
 		
 	cuda_gl_common->set_opengl_flags();
 
 	/* 0 swap immediate 1 sync to monitor */
 	glfwSwapInterval(1);
-		
-	int selected_sphere = -1;
 
 	while (!glfwWindowShouldClose(window))
 	{					
@@ -451,7 +459,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 								
 				glUniformMatrix4fv(vbo_texture_model_matrix, 1, GL_FALSE, model_matrices[4].m);
 
-				glBindVertexArray(vao_texture);
+				glBindVertexArray(vao_texture_triangle);
 				glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_points);
 				glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_coords);
 				glBindTexture(GL_TEXTURE_2D, gl_texture);
