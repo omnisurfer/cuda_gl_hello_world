@@ -18,6 +18,10 @@
 
 #include "cube_map.h"
 
+// Have to define here since it is my only C/C++ file
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
@@ -102,6 +106,7 @@ int main(int arc, char** argvv) {
 
 		// Write out the image
 		if (true) {
+			/*
 			stbi_write_png(
 				c_file_name,
 				x_img_dimension,
@@ -110,7 +115,45 @@ int main(int arc, char** argvv) {
 				output_image_data,
 				y_img_dimension * implemented_channels
 			);
+			*/
 		}
+
+		delete[] output_image_data;
+		output_image_data = nullptr;
+	}
+
+	if (true) {
+
+		std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
+		texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
+		
+		unsigned char* output_image_data = NULL;
+		int x_dimension = 0;
+		int y_dimension = 0;
+		int implemented_channels = 0;
+		int number_of_bytes = 0;
+
+		bool processed_ok = cuda_gl_common.rotate_image_using_cuda(
+			texture_map_file_path,
+			"posz.png",
+			output_image_data,
+			90.0f,
+			x_dimension,
+			y_dimension,
+			implemented_channels,
+			number_of_bytes
+		);
+
+		printf("TEST\n");
+
+		processed_ok = cuda_gl_common.write_png_to_disk(
+			"posz_rotated.png",
+			"posz_rotated.png",
+			x_dimension,
+			y_dimension,
+			implemented_channels,
+			(const char*)output_image_data
+		);
 
 		delete[] output_image_data;
 		output_image_data = nullptr;
@@ -165,7 +208,7 @@ int main(int arc, char** argvv) {
 		draw_phong_spheres(window, &cuda_gl_common);
 	}
 
-	if (true) {
+	if (false) {
 		
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

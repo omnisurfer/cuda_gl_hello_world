@@ -6,6 +6,9 @@
 // #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 #define SHADER_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/shaders/"
 #define ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/assets/"
 #define THIRD_PARTY_ASSETS_DIRECTORY "D:/DevSync/Sandbox/CUDA/cuda_gl_hello_world/Common/assets/"
@@ -19,6 +22,15 @@ extern "C" {
 		GLsizei length,
 		const GLchar* message,
 		const void* userParam);
+
+	int execute_image_rotation_kernel(
+		const float* input_image_data,
+		float* output_image_data,
+		int x_dimension,
+		int y_dimension,
+		int stride,
+		float angle_degrees
+	);
 }
 
 class CUDAGLCommon {
@@ -132,5 +144,98 @@ public:
 		number_of_bytes = x_img_dimension * y_img_dimension * sizeof(float);
 
 		return is_power_of_two;
+	}
+
+	bool write_png_to_disk(
+		std::string file_path, 
+		std::string file_name,
+		int x_dimension,
+		int y_dimension,
+		int implemented_channels,
+		const char* image_data
+	) {
+		// TODO need to process file_path
+		const char* c_file_name = file_name.c_str();
+
+		/**/
+		int status = stbi_write_png(
+			c_file_name,
+			x_dimension,
+			y_dimension,
+			implemented_channels,
+			image_data,
+			y_dimension * implemented_channels
+		);
+		/**/
+
+		// TODO need to process return
+
+		return true;
+	}
+
+	bool rotate_image_using_cuda(
+		std::string path_to_files, 
+		std::string file_name, 
+		unsigned char*& output_image_data,
+		const float rotation_angle_degrees,
+		int& x_dimension,
+		int& y_dimension,
+		int& implemented_channels,
+		int& number_of_bytes
+	) {
+
+		bool processed_ok = true;
+
+		const char* _file_name_and_path = path_to_files.append(file_name).c_str();
+
+		unsigned char* _input_image_data = NULL;
+
+		processed_ok = read_in_texture_to_memory(
+			_file_name_and_path,
+			_input_image_data,
+			x_dimension,
+			y_dimension,
+			implemented_channels,
+			number_of_bytes
+		);
+
+		if (processed_ok) {
+
+			// was float, but using implemented channels
+			int output_array_size = x_dimension * y_dimension * implemented_channels;
+
+			output_image_data = new unsigned char[number_of_bytes];
+
+			// throw up warning that implemented channels is not equal to designed for stride of 4
+			const int kernel_stride = 4;
+
+			if (implemented_channels != kernel_stride) {
+				printf(
+					"WARNING: Implemented channels %i of image does not match expected kernel stide of %i. Image processing may fail.",
+					implemented_channels,
+					kernel_stride
+				);
+			}
+
+			// execute the kernel
+			int kernel_run_ok = execute_image_rotation_kernel(
+				(const float*)_input_image_data,
+				(float*)output_image_data,
+				x_dimension,
+				y_dimension,
+				implemented_channels,
+				rotation_angle_degrees
+			);
+
+			if (kernel_run_ok > 0) {
+				fprintf(stderr, "Image rotation kernel failed to execute.\n");
+				processed_ok = false;
+			}
+		}
+
+		delete[] _input_image_data;
+		_input_image_data = nullptr;
+
+		return processed_ok;
 	}
 };
