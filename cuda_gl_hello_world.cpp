@@ -56,72 +56,7 @@ int main(int arc, char** argvv) {
 
 	/*
 	* IMAGE ROTATION DEBUGGING
-	*/
-	if (false) {
-				
-        // TODO: Clean this up
-		std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
-		texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
-		
-		const char* file_name = texture_map_file_path.append("posz.png").c_str();
-
-		int x_img_dimension = 0;	
-		int y_img_dimension = 0;
-		int implemented_channels = 0;
-		int number_of_bytes = 0;
-		const int stride = 4;		// 4 bytes per channel, RGBA, a float		
-		const float rotation_angle_degrees = 138.0;
-
-		unsigned char* input_image_data = NULL;
-		unsigned char* output_image_data = NULL;
-
-		bool image_read_ok = cuda_gl_common.read_in_texture_to_memory(
-			file_name,
-			input_image_data,
-			x_img_dimension,
-			y_img_dimension,
-			implemented_channels,
-			number_of_bytes
-		);
-
-		int output_array_size = x_img_dimension * y_img_dimension * sizeof(float);
-
-		output_image_data = new unsigned char[number_of_bytes];
-
-		int success = execute_image_rotation_kernel(
-			(const float*)input_image_data,
-			(float*)output_image_data,
-			x_img_dimension,
-			y_img_dimension,
-			stride,
-			rotation_angle_degrees
-		);
-
-		if (success > 0) {
-			fprintf(stderr, "Image rotation kernel failed to execute.\n");
-		}
-
-		std::string _file_name = "rotate_output_angle_" + std::to_string(rotation_angle_degrees) + "deg.png";
-		const char* c_file_name = _file_name.c_str();
-
-		// Write out the image
-		if (true) {
-			/*
-			stbi_write_png(
-				c_file_name,
-				x_img_dimension,
-				y_img_dimension,
-				implemented_channels,
-				output_image_data,
-				y_img_dimension * implemented_channels
-			);
-			*/
-		}
-
-		delete[] output_image_data;
-		output_image_data = nullptr;
-	}
-
+	*/	
 	if (true) {
 
 		std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
@@ -137,14 +72,12 @@ int main(int arc, char** argvv) {
 			texture_map_file_path,
 			"posz.png",
 			output_image_data,
-			90.0f,
+			135.0f,
 			x_dimension,
 			y_dimension,
 			implemented_channels,
 			number_of_bytes
-		);
-
-		printf("TEST\n");
+		);		
 
 		processed_ok = cuda_gl_common.write_png_to_disk(
 			"posz_rotated.png",

@@ -338,27 +338,68 @@ cudaError_t rotateImage(
 		goto Error;
 	}
 	
-	int block_size = 64; //8; //86 for RTX 3090
-	size_t compute_pitch = device_pitch; // 8192 from getpitch() call, i.e. threads per block
-	compute_pitch = 32;
+	int block_size = 0; 
+	size_t compute_pitch; 
 
-	// launch kernel
-	// https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#execution-configuration
-	printf("launching with block, stride, c-d-h_pitch %i-b %i-s %i-c %i-d %i-h\n", 
-		block_size, stride, compute_pitch, device_pitch, host_pitch
-	);
-	printf("x_dim, y_dim %i %i\n", x_dimension, y_dimension);
-	rotateImageKernel<<<block_size, compute_pitch>>>(
-		device_input_buffer, 
-		device_output_buffer,
-		x_dimension, 
-		y_dimension, 
-		stride,
-		block_size,
-		compute_pitch,
-		device_pitch,
-		angle_radians
+	// launch kernel - working, not optimal	
+	if (false) {
+
+		block_size = 64; //8; //86 for RTX 3090
+		compute_pitch = device_pitch; // 8192 from getpitch() call, i.e. threads per block
+		compute_pitch = 32;
+
+		// https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#execution-configuration
+		printf("launching with block, stride, c-d-h_pitch %i-b %i-s %i-c %i-d %i-h\n",
+			block_size, stride, compute_pitch, device_pitch, host_pitch
 		);
+		printf("x_dim, y_dim %i %i\n", x_dimension, y_dimension);
+
+		printf("block size %i, compute_pitch %i", block_size, compute_pitch);
+		rotateImageKernel <<<block_size, compute_pitch>>> (
+			device_input_buffer,
+			device_output_buffer,
+			x_dimension,
+			y_dimension,
+			stride,
+			block_size,
+			compute_pitch,
+			device_pitch,
+			angle_radians
+			);
+	}	
+	else if (true) {
+		
+		// taken from simpleCUDA2GL example kernel
+		
+		//32 * 32 = 1024 threads per block
+		dim3 block(32, 32, 1);
+
+		// would need to rework kernel to match this paradiagm
+		block_size = block.x + block.y;
+
+		/* 
+		2048 / 32 = 64 - 64 * 64 = 4096, the number of grids containing the blocks needed to get the job done, the GPU will basically manage
+		the grids as it feeds them to the GPU to be processed as a group at the end of execution.
+		*/
+
+		dim3 grid(x_dimension / block.x, y_dimension / block.y, 1);
+		compute_pitch = block.x;
+
+		rotateImageKernel<<<grid, block, 0>>> (
+			device_input_buffer,
+			device_output_buffer,
+			x_dimension,
+			y_dimension,
+			stride,
+			block_size,
+			compute_pitch,
+			device_pitch,
+			angle_radians
+			);
+	}
+	else {
+		// do nothing...
+	}
 
 	// check for errors launching the kernel
 	cuda_status = cudaGetLastError();
