@@ -54,8 +54,96 @@ __global__ void rotateImageKernel(
 	int x_center = x_dimension - x_dimension / 2;
 	int y_center = y_dimension - y_dimension / 2;
 
-	// printf("dim.xy %i %i stride-block_size-device_pitch %i %i %i\n", x_dimension, y_dimension, stride, block_size, device_pitch);	 
+	// printf("dim.xy %i %i stride-block_size-device_pitch %i %i %i\n", x_dimension, y_dimension, stride, block_size, device_pitch);
 	if (true) {
+
+		int thread_id_x = threadIdx.x;
+		int thread_id_y = threadIdx.y;
+
+		int block_width = blockDim.x;
+		int block_height = blockDim.y;
+
+		int block_id_x = blockIdx.x;
+		int block_id_y = blockIdx.y;
+
+		int pos_x = block_id_x * block_width + thread_id_x;
+		int pos_y = block_id_y * block_height + thread_id_y;
+
+		if (false) {
+			printf("%i, %i, %i, %i, %i, %i, %i, %i\n",
+				thread_id_x,
+				thread_id_y,
+				block_id_x,
+				block_id_y,
+				block_width,
+				block_height,
+				pos_x,
+				pos_y
+			);
+		}
+		
+		int current_row_index = pos_y * x_dimension;
+		int current_column_index = pos_x;
+
+		int current_output_index = current_row_index + current_column_index;
+		int current_input_index = current_output_index;
+
+		int rotated_input_index = current_input_index;
+
+		float raw_new_column_index = 
+			((float)pos_x - x_center) * cos(angle_radians) - 
+			((float)pos_y - y_center) * sin(angle_radians) + x_center;
+		
+		if (raw_new_column_index < 1) {
+			raw_new_column_index = 0;
+		}
+
+		int new_column_index = int(round(raw_new_column_index));
+		
+		// clamp new_column_index
+		if (new_column_index > x_dimension - 1) {
+			new_column_index = x_dimension - 1;
+		}		
+
+		float raw_new_row_index = 
+			((float)pos_x - x_center) * sin(angle_radians) + 
+			((float)pos_y - y_center) * cos(angle_radians) + y_center;
+		
+		if (raw_new_row_index < 1) {
+			raw_new_row_index = 0;
+		}
+
+		int new_row_index = int(round(raw_new_row_index));
+
+		// clamp new_row_index
+		if (new_row_index > y_dimension - 1) {
+			new_row_index = y_dimension - 1;
+		}
+		
+		if (false) {
+			printf("cur row/column %i %i new row/column %i %i center x/y %i %i\n",
+				current_row_index,
+				current_column_index,
+				new_row_index,
+				new_column_index,
+				x_center,
+				y_center
+			);
+		}
+
+		// output_image_data[current_output_index] = input_image_data[rotated_input_index];
+
+		if (new_column_index >= 0 && new_column_index < y_dimension) {
+			
+			int input_new_row_index = new_row_index * x_dimension;
+			int input_new_column_index = new_column_index;
+
+			int current_input_index = input_new_row_index + input_new_column_index;
+
+			output_image_data[current_output_index] = input_image_data[current_input_index];
+		}
+	}
+	else if (false) {
 
 		/*
 		* Better way that actually parallelizes the rotation work...
@@ -144,11 +232,11 @@ __global__ void rotateImageKernel(
 				}
 			}					
 		}
-	}
+	}			
 	else {
 
 		/*
-		* OLD Loop based rotation. Does work, but very slow since it basically just runs on a single core
+		* OLD Loop based rotation. Does work, but very slow since it basically just runs on a single core it seems
 		* - reference: https://stackoverflow.com/questions/9833316/cuda-image-rotation
 		*/
 
@@ -341,7 +429,7 @@ cudaError_t rotateImage(
 	int block_size = 0; 
 	size_t compute_pitch; 
 
-	// launch kernel - working, not optimal	
+	// launch kernel - working, not optimal. Only works with 2048x2048 images.
 	if (false) {
 
 		block_size = 64; //8; //86 for RTX 3090
@@ -372,6 +460,7 @@ cudaError_t rotateImage(
 		// taken from simpleCUDA2GL example kernel
 		
 		//32 * 32 = 1024 threads per block
+		// dim3 block(32, 32, 1);
 		dim3 block(32, 32, 1);
 
 		// would need to rework kernel to match this paradiagm
@@ -382,9 +471,14 @@ cudaError_t rotateImage(
 		the grids as it feeds them to the GPU to be processed as a group at the end of execution.
 		*/
 
+		// x_dimension = 128;
+		// y_dimension = x_dimension;
+
 		dim3 grid(x_dimension / block.x, y_dimension / block.y, 1);
 		compute_pitch = block.x;
 
+		printf("block %i grid %i\n", block.x, grid.x);
+		printf("t_id_x, t_id_y, bk_id_x, bk_id_y, bk_w, bk_h, pos_x, pos_y\n");
 		rotateImageKernel<<<grid, block, 0>>> (
 			device_input_buffer,
 			device_output_buffer,
