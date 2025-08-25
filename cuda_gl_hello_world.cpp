@@ -57,7 +57,7 @@ int main(int arc, char** argvv) {
 	/*
 	* IMAGE ROTATION DEBUGGING
 	*/	
-	if (true) {
+	if (false) {
 
 		std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
 		texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
@@ -141,7 +141,7 @@ int main(int arc, char** argvv) {
 		draw_phong_spheres(window, &cuda_gl_common);
 	}
 
-	if (false) {
+	if (true) {
 		
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 

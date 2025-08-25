@@ -57,6 +57,10 @@ __global__ void rotateImageKernel(
 	// printf("dim.xy %i %i stride-block_size-device_pitch %i %i %i\n", x_dimension, y_dimension, stride, block_size, device_pitch);
 	if (true) {
 
+		/* 
+		 * More flexible kernel that is based on the simpleCUDA2GL.cu kernel example in the CUDA SDK example projects.		
+		*/
+
 		int thread_id_x = threadIdx.x;
 		int thread_id_y = threadIdx.y;
 
@@ -68,19 +72,6 @@ __global__ void rotateImageKernel(
 
 		int pos_x = block_id_x * block_width + thread_id_x;
 		int pos_y = block_id_y * block_height + thread_id_y;
-
-		if (false) {
-			printf("%i, %i, %i, %i, %i, %i, %i, %i\n",
-				thread_id_x,
-				thread_id_y,
-				block_id_x,
-				block_id_y,
-				block_width,
-				block_height,
-				pos_x,
-				pos_y
-			);
-		}
 		
 		int current_row_index = pos_y * x_dimension;
 		int current_column_index = pos_x;
@@ -119,19 +110,6 @@ __global__ void rotateImageKernel(
 		if (new_row_index > y_dimension - 1) {
 			new_row_index = y_dimension - 1;
 		}
-		
-		if (false) {
-			printf("cur row/column %i %i new row/column %i %i center x/y %i %i\n",
-				current_row_index,
-				current_column_index,
-				new_row_index,
-				new_column_index,
-				x_center,
-				y_center
-			);
-		}
-
-		// output_image_data[current_output_index] = input_image_data[rotated_input_index];
 
 		if (new_column_index >= 0 && new_column_index < y_dimension) {
 			
@@ -146,7 +124,7 @@ __global__ void rotateImageKernel(
 	else if (false) {
 
 		/*
-		* Better way that actually parallelizes the rotation work...
+		* Better way that actually parallelizes the rotation work... BUT seems to only work when explicitly "tuned" for 2048 x 2048 images
 		* x_dim, y_dim 2048 2048
 		* dim.xy 2048 2048 stride-block_size-device_pitch 4 8 16
 		*/
