@@ -183,14 +183,24 @@ void restructured_init_textures_points(GLfloat *texture_triangle_points, int num
 void restructured_configure_resources_texture(
 	GLuint& vao_texture,
 	GLuint& vbo_textrue_points,
+	GLuint& vbo_texture_normals,
 	GLuint& vbo_textrue_coords,
 	mat4* model_matrices,
 	vec3* model_positions_world,
 	GLfloat* tex_triangle_points,
 	int size_of_tex_triangle_points,
 	GLfloat* tex_triangle_coords,
-	int size_of_tex_triangle_coords
+	int size_of_tex_triangle_coords,
+	int& point_count
 ) {
+
+	// TODO: dummy normals with nothing in it since I have no normal vectors for the triangle face
+	GLfloat* vertex_normals = NULL;
+
+	// vertex normals
+	glGenBuffers(1, &vbo_texture_normals);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_normals);
+	glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
 
 	glGenVertexArrays(1, &vao_texture);
 	glBindVertexArray(vao_texture);
@@ -208,8 +218,8 @@ void restructured_configure_resources_texture(
 	glBufferData(GL_ARRAY_BUFFER, size_of_tex_triangle_coords, tex_triangle_coords, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_coords);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize
-	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize
+	glEnableVertexAttribArray(2);
 
 	// temp use of model matrix postion 4 to test placing the texure model.	
 	model_matrices[4] = translate(identity_mat4(), model_positions_world[4]);
@@ -381,6 +391,8 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	GLuint vbo_texture_triangle_coords;
 	// TBD for triangle normals.
 	GLuint vbo_texture_triangle_normals;
+	// TODO - dummy point count
+	// point_count = 0;
 	
 	GLuint gl_texture = 0;
 
@@ -393,15 +405,18 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			vao_texture_triangle,
 			vbo_texture_triangle_points,
 			vbo_texture_triangle_coords,
+			vbo_texture_triangle_normals,
 			model_matrices,
 			model_positions_world,
 			tex_triangle_points,
 			size_of_triangle_points,
 			tex_triangle_coords,
-			size_of_tex_triangle_coords
+			size_of_tex_triangle_coords,
+			point_count
 		);
 		
 		restructured_configure_shaders_texture(cuda_gl_common, gl_texture, vbo_texture_view_matrix, vbo_texture_projection_matrix, vbo_texture_model_matrix);
+		// restructured_configure_shaders_texture(cuda_gl_common, gl_texture, vbo_sphere_view_matrix, vbo_sphere_projection_matrix, vbo_texture_model_matrix);
 	}
 
 	// render a second mesh here
@@ -456,6 +471,8 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glUseProgram(restructured_texture_shader_program);
 				glUniformMatrix4fv(vbo_texture_view_matrix, 1, GL_FALSE, main_camera.view_matrix.m);
 				glUniformMatrix4fv(vbo_texture_projection_matrix, 1, GL_FALSE, main_camera.projection_matrix.m);
+				// glUniformMatrix4fv(vbo_sphere_view_matrix, 1, GL_FALSE, main_camera.view_matrix.m);
+				// glUniformMatrix4fv(vbo_sphere_projection_matrix, 1, GL_FALSE, main_camera.projection_matrix.m);
 								
 				glUniformMatrix4fv(vbo_texture_model_matrix, 1, GL_FALSE, model_matrices[4].m);
 

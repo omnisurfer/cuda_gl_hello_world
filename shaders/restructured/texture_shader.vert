@@ -2,7 +2,9 @@
 
 // texture panel bound attributes
 layout(location = 0) in vec3 tex_triangle_points;
-layout(location = 1) in vec2 tex_triangle_coords;
+// TBD no normals yet for triangle so placeholder
+layout(location = 1) in vec3 vertex_normal;
+layout(location = 2) in vec2 tex_triangle_coords;
 
 // TODO need to calculate tex triangle normal...
 uniform mat4 model_matrix, view_matrix, projection_matrix;

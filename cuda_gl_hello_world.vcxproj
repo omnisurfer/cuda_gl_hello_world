@@ -106,6 +106,7 @@
     <ClInclude Include="gl_scenes\cube_map.h" />
     <ClInclude Include="gl_scenes\phong_spheres.h" />
     <ClInclude Include="gl_scenes\quat_camera_spheres.h" />
+    <ClInclude Include="gl_scenes\restructure.h" />
     <ClInclude Include="gl_scenes\simple_triangle.h" />
     <ClInclude Include="gl_scenes\template_scene.h" />
     <ClInclude Include="gl_scenes\texture_load.h" />
