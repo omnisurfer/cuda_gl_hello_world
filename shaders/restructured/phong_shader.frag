@@ -72,7 +72,7 @@ void main() {
 		
             half_way_eye = normalize(surface_to_viewer_eye + direction_to_light_eye);
             dot_product_specular = max(dot(half_way_eye, n_eye), 0.0);
-            specular_factor = pow(dot_product_specular, lights[i].specular_exponent);
+            specular_factor = pow(dot_product_specular, lights[i].specular_exponent);                      
 		
             Is += lights[i].Ls.xyz * lights[i].Ks.xyz * specular_factor;
         }
@@ -120,7 +120,7 @@ void main() {
             half_way_eye = normalize(surface_to_viewer_eye + direction_to_light_eye);
             dot_product_specular = max(dot(half_way_eye, n_eye), 0.0);
             specular_factor = pow(dot_product_specular, lights[i].specular_exponent);
-            
+                        
             Is += lights[i].Ls * lights[i].Ks * specular_factor;
         }
 

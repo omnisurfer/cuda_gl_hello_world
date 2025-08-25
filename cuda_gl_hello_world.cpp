@@ -16,6 +16,8 @@
 #include "phong_spheres.h"
 #include "texture_load.h"
 
+#include "restructure.h"
+
 #include "cube_map.h"
 
 // Have to define here since it is my only C/C++ file
@@ -141,7 +143,7 @@ int main(int arc, char** argvv) {
 		draw_phong_spheres(window, &cuda_gl_common);
 	}
 
-	if (true) {
+	if (false) {
 		
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
@@ -149,9 +151,27 @@ int main(int arc, char** argvv) {
 		{
 			printf("Failed to create Open GL window");
 			return -1;
-		}		
+		}
 
-		draw_texture_load(window, &cuda_gl_common);		
+		draw_texture_load(window, &cuda_gl_common);
+	}
+
+	// restucture work
+	if (true) {
+	
+		// https://learnopengl.com/Model-Loading/Assimp
+
+		printf("START OF RESTRUCTURE!");
+
+		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+		if (!window)
+		{
+			printf("Failed to create Open GL window");
+			return -1;
+		}
+
+		code_restructured_scene(window, &cuda_gl_common);
 	}
 
 	if (false) {
