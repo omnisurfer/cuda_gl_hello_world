@@ -158,9 +158,7 @@ int main(int arc, char** argvv) {
 
 	// restucture work
 	if (true) {
-	
-		// https://learnopengl.com/Model-Loading/Assimp
-
+			
 		printf("START OF RESTRUCTURE\n");
 
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
