@@ -5,14 +5,15 @@
 #include <cuda_gl_camera.h>
 #include <cuda_gl_lighting.h>
 
-#define TEXTURE_VERTEX_SHADER_FILE "restructured/texture_shader.vert"
-#define TEXTURE_FRAGMENT_SHADER_FILE "restructured/texture_shader.frag"
+#define FLAT_PLANE_VERTEX_SHADER_FILE "restructured/flat_plane_shader.vert"
+#define FLAT_PLANE_FRAGMENT_SHADER_FILE "restructured/flat_plane_shader.frag"
 
 #define PHONG_VERTEX_SHADER_FILE "restructured/phong_shader.vert"
 #define PHONG_FRAGMENT_SHADER_FILE "restructured/phong_shader.frag"
 
-#define TEXTURE_MESH_FILE "3d_objects/sphere.obj"
-#define MULTI_MESH_MESH_FILE "3d_objects/cube.obj"
+#define SPHERE_MESH_FILE "sphere.obj"
+#define FLAT_PLANE_MESH_FILE "flat_plane.obj"
+#define MULTI_MESH_MESH_FILE "cube.obj"
 
 #define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
 
@@ -97,58 +98,6 @@ void restructured_init_model_positions(vec3* model_positions, int number_of_mode
 	model_positions[4] = vec3(1.0, 1.0, 0.0);
 }
 
-void restructured_configure_resources_spheres(
-	GLuint& vao_spheres,
-	GLuint& vbo_sphere_points,
-	GLuint& vbo_sphere_normals,
-	mat4* model_matrices,
-	vec3* model_positions_world,
-	int& point_count
-) {
-
-	GLfloat* vertex_points = NULL;
-	GLfloat* vertex_normals = NULL;
-	GLfloat* texture_coordinates = NULL;	
-
-	std::string mesh_file_path = ASSETS_DIRECTORY;
-	mesh_file_path.append(TEXTURE_MESH_FILE);
-
-	load_obj_file(mesh_file_path.c_str(), vertex_points, texture_coordinates, vertex_normals, point_count);
-
-	glGenVertexArrays(1, &vao_spheres);
-	glBindVertexArray(vao_spheres);
-
-	if (NULL != vertex_points) {
-
-		// vertex points
-		glGenBuffers(1, &vbo_sphere_points);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_points);
-		glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_points, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(0);
-
-		// vertex normals
-		glGenBuffers(1, &vbo_sphere_normals);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_normals);
-		glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(1);
-	}
-	else {
-		fprintf(stderr, "ERROR: could not load meshes.");
-		glfwTerminate();
-		return;
-	}
-
-	printf("old normals/points %i %i\n", vbo_sphere_normals, vbo_sphere_points);
-
-	for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
-		model_matrices[i] = translate(identity_mat4(), model_positions_world[i]);
-	}
-}
-
 void configure_mesh_resources(
 	gl_mesh_resources& gl_mesh_resources,
 	std::string mesh_file_path,
@@ -207,35 +156,6 @@ void configure_mesh_resources(
 	}
 }
 
-int restructured_configure_shaders_spheres(CUDAGLCommon* cuda_gl_common, GLuint &vbo_view_matrix, GLuint &vbo_projection_matrix, GLuint &vbo_model_matrix) {
-
-	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->vertex_shader_file_path.append(PHONG_VERTEX_SHADER_FILE);
-
-	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->frag_shader_file_path.append(PHONG_FRAGMENT_SHADER_FILE);
-
-	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
-
-	restructured_lighting_shader_program = cuda_gl_common->shader_program;
-
-	vbo_view_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
-	vbo_projection_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
-
-	vbo_model_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");	
-
-	if (restructured_lighting_shader_program <= 0)
-	{
-		fprintf(stderr, "ERROR: could not compile shader_program.");
-		glfwTerminate();
-		return -1;
-	}
-	else {
-		printf("old model/proj/view %i %i %i\n", vbo_model_matrix, vbo_projection_matrix, vbo_view_matrix);
-		return 0;
-	}
-}
-
 int configure_shader_resources(CUDAGLCommon* cuda_gl_common, gl_shader_resources& gl_shader_resources) {
 
 	std::string vertex_shader_path_and_filename = gl_shader_resources.shader_directory_path + gl_shader_resources.vertex_shader_filename;
@@ -261,25 +181,6 @@ int configure_shader_resources(CUDAGLCommon* cuda_gl_common, gl_shader_resources
 		gl_shader_resources.gl_camera_resources.vbo_view_matrix_handle
 	);
 	
-	return 0;
-}
-
-int restructured_configure_scene_lighting(GLuint &vbo_lights, GLuint &block_location_lights, Light* lights, int size_of_lights_in_bytes, int number_of_lights) {
-
-	glUniformBlockBinding(restructured_lighting_shader_program, block_location_lights, 0);
-
-	/* https://community.khronos.org/t/sending-an-array-of-structs-to-shader-via-an-uniform-buffer-object/75092 */
-	/* https://registry.khronos.org/OpenGL/specs/gl/glspec45.core.pdf */
-	glGenBuffers(1, &vbo_lights);
-	glBindBuffer(GL_UNIFORM_BUFFER, vbo_lights);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(Light) * number_of_lights, NULL, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_UNIFORM_BUFFER, block_location_lights, vbo_lights);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	glBindBuffer(GL_UNIFORM_BUFFER, vbo_lights);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, size_of_lights_in_bytes, lights);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
 	return 0;
 }
 
@@ -376,10 +277,10 @@ int restructured_configure_shaders_texture(
 
 	/* shaders */
 	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->vertex_shader_file_path.append(TEXTURE_VERTEX_SHADER_FILE);
+	cuda_gl_common->vertex_shader_file_path.append(FLAT_PLANE_VERTEX_SHADER_FILE);
 
 	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->frag_shader_file_path.append(TEXTURE_FRAGMENT_SHADER_FILE);
+	cuda_gl_common->frag_shader_file_path.append(FLAT_PLANE_FRAGMENT_SHADER_FILE);
 
 	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
 	
@@ -446,11 +347,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	);
 
 	main_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));
-	
-	GLuint vbo_sphere_view_matrix;
-	GLuint vbo_sphere_projection_matrix;
-	GLuint vbo_sphere_model_matrix;
-
+		
 	GLuint vbo_texture_view_matrix;
 	GLuint vbo_texture_projection_matrix;
 	GLuint vbo_texture_model_matrix;
@@ -458,7 +355,15 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 #pragma region Sphere Geometry and Shaders
 	const int number_of_model_positions = 5;
 
-	// DEBUG_20250826	
+	vec3 model_positions_world[number_of_model_positions];
+
+	restructured_init_model_positions(model_positions_world, number_of_model_positions);
+
+	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES + 1];
+
+	int point_count;
+
+	// DEBUG_20250826 - SPHERE
 	gl_shader_resources sphere_shader_resources;
 	gl_mesh_resources sphere_mesh_resources;
 	gl_lighting_resources sphere_lighting_resources;
@@ -467,98 +372,59 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	sphere_shader_resources.vertex_shader_filename = PHONG_VERTEX_SHADER_FILE;
 	sphere_shader_resources.frag_shader_filename = PHONG_FRAGMENT_SHADER_FILE;
 
-	vec3 model_positions_world[number_of_model_positions];
-
-	restructured_init_model_positions(model_positions_world, number_of_model_positions);
-	
-	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES + 1];
-
-	GLuint vao_sphere;
-	GLuint vbo_sphere_points;
-	GLuint vbo_sphere_normals;
-
-	int point_count;
-
-	restructured_configure_resources_spheres(vao_sphere, vbo_sphere_points, vbo_sphere_normals, model_matrices, model_positions_world, point_count);
-	restructured_configure_shaders_spheres(cuda_gl_common, vbo_sphere_view_matrix, vbo_sphere_projection_matrix, vbo_sphere_model_matrix);
-	
-	configure_mesh_resources(sphere_mesh_resources, ASSETS_DIRECTORY, TEXTURE_MESH_FILE);
+	configure_mesh_resources(sphere_mesh_resources, ASSETS_DIRECTORY, SPHERE_MESH_FILE);
 	configure_shader_resources(cuda_gl_common, sphere_shader_resources);
+
+	// DEBUG 20250828 - Texture Map Triangle
+	gl_shader_resources flat_plane_shader_resources;
+	gl_mesh_resources flat_plane_mesh_resources;
+	gl_lighting_resources flat_plane_lighting_resources;
+
+	flat_plane_shader_resources.shader_directory_path = SHADER_DIRECTORY;
+	flat_plane_shader_resources.vertex_shader_filename = PHONG_VERTEX_SHADER_FILE; // FLAT_PLANE_VERTEX_SHADER_FILE;
+	flat_plane_shader_resources.frag_shader_filename = PHONG_FRAGMENT_SHADER_FILE; // FLAT_PLANE_FRAGMENT_SHADER_FILE;
+
+	configure_mesh_resources(flat_plane_mesh_resources, ASSETS_DIRECTORY, FLAT_PLANE_MESH_FILE);
+	configure_shader_resources(cuda_gl_common, flat_plane_shader_resources);
 #pragma endregion
 
-#pragma region Lighting	
+#pragma region Textures - DEPRECATED
+	if (false) {
+		/* 2d texture plane geometry */
+		const int number_of_triangles = 2;
+		const int points_per_triangle = 9;
+		const int number_of_triangle_points = number_of_triangles * points_per_triangle;
 
-	const int number_of_lights = 3;
+		GLfloat tex_triangle_points[number_of_triangle_points];
 
-	Light lights[number_of_lights];
+		restructured_init_textures_points(tex_triangle_points, number_of_triangles);
 
-	restructured_init_lights(lights, 3);
+		GLfloat tex_triangle_coords[] = {
+			0.0f, 1.0f,
+			0.0f, 0.0f,
+			1.0f, 0.0f,
 
-	const float sphere_radius = 1.0f;
-	
-	GLuint vbo_lights_handle;
-	GLuint light_block_location = glGetUniformBlockIndex(restructured_lighting_shader_program, "light_source");
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f
+		};
 
-	int size_of_lights_in_bytes = sizeof(lights);
-		
-	restructured_configure_scene_lighting(
-		vbo_lights_handle,
-		light_block_location,
-		lights,
-		size_of_lights_in_bytes,
-		number_of_lights
-	);	
+		/*
+		* May need to rethink how I use VAOs
+		* https://stackoverflow.com/questions/59595805/what-is-the-best-way-to-draw-multiple-vao-using-the-same-shader-but-not-having-t
+		* https://stackoverflow.com/questions/14249634/opengl-vaos-and-multiple-buffers
+		*/
 
-	sphere_lighting_resources.associated_shader_program_handle = sphere_shader_resources.shader_program_handle;
-	sphere_lighting_resources.vbo_block_lights_location_handle = glGetUniformBlockIndex(sphere_lighting_resources.associated_shader_program_handle, "light_source");
+		GLuint vao_texture_triangle;
+		GLuint vbo_texture_triangle_points;
+		GLuint vbo_texture_triangle_coords;
+		// TBD for triangle normals.
+		GLuint vbo_texture_triangle_normals;
 
-	configure_scene_lighting(
-		sphere_lighting_resources,
-		lights,
-		number_of_lights,
-		size_of_lights_in_bytes
-	);
+		GLuint gl_texture = 0;
 
-#pragma endregion
-
-#pragma region Textures
-	/* 2d texture plane geometry */
-	const int number_of_triangles = 2;
-	const int points_per_triangle = 9;
-	const int number_of_triangle_points = number_of_triangles * points_per_triangle;
-
-	GLfloat tex_triangle_points[number_of_triangle_points];
-
-	restructured_init_textures_points(tex_triangle_points, number_of_triangles);
-
-	GLfloat tex_triangle_coords[] = {
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-
-		1.0f, 0.0f,
-		1.0f, 1.0f,
-		0.0f, 1.0f
-	};
-	
-	/*
-	* May need to rethink how I use VAOs
-	* https://stackoverflow.com/questions/59595805/what-is-the-best-way-to-draw-multiple-vao-using-the-same-shader-but-not-having-t
-	* https://stackoverflow.com/questions/14249634/opengl-vaos-and-multiple-buffers
-	*/
-
-	GLuint vao_texture_triangle;
-	GLuint vbo_texture_triangle_points;
-	GLuint vbo_texture_triangle_coords;
-	// TBD for triangle normals.
-	GLuint vbo_texture_triangle_normals;	
-	
-	GLuint gl_texture = 0;
-
-	int size_of_triangle_points = sizeof(tex_triangle_points);
-	int size_of_tex_triangle_coords = sizeof(tex_triangle_coords);
-
-	if (true) {
+		int size_of_triangle_points = sizeof(tex_triangle_points);
+		int size_of_tex_triangle_coords = sizeof(tex_triangle_coords);
 
 		restructured_configure_resources_texture(
 			vao_texture_triangle,
@@ -573,18 +439,52 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			size_of_tex_triangle_coords,
 			point_count
 		);
-		
+
 		restructured_configure_shaders_texture(cuda_gl_common, gl_texture, vbo_texture_view_matrix, vbo_texture_projection_matrix, vbo_texture_model_matrix);
 	}
+	else {
 
-	// render a second mesh here
-	GLuint vao_monkey;
-	GLuint vbo_monkey_points;
-	GLuint vbo_monkey_normals;
+	}
+#pragma endregion
 
+#pragma region Texture
 
 #pragma endregion
 		
+#pragma region Lighting
+	const int number_of_lights = 3;
+
+	Light lights[number_of_lights];
+
+	restructured_init_lights(lights, 3);
+
+	const float sphere_radius = 1.0f;
+
+	GLuint vbo_lights_handle;
+	GLuint light_block_location = glGetUniformBlockIndex(restructured_lighting_shader_program, "light_source");
+
+	int size_of_lights_in_bytes = sizeof(lights);
+
+	sphere_lighting_resources.associated_shader_program_handle = sphere_shader_resources.shader_program_handle;
+	sphere_lighting_resources.vbo_block_lights_location_handle = glGetUniformBlockIndex(sphere_lighting_resources.associated_shader_program_handle, "light_source");
+
+	// Sphere
+	configure_scene_lighting(
+		sphere_lighting_resources,
+		lights,
+		number_of_lights,
+		size_of_lights_in_bytes
+	);
+
+	// Flat Plane
+	configure_scene_lighting(
+		flat_plane_lighting_resources,
+		lights,
+		number_of_lights,
+		size_of_lights_in_bytes
+	);
+#pragma endregion
+
 	cuda_gl_common->set_opengl_flags();
 
 	/* 0 swap immediate 1 sync to monitor */
@@ -603,26 +503,6 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);		
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			// draw spheres - deprecated
-			if (false) {
-				glUseProgram(restructured_lighting_shader_program);
-				glUniformMatrix4fv(vbo_sphere_view_matrix, 1, GL_FALSE, main_camera.view_matrix.m);
-				glUniformMatrix4fv(vbo_sphere_projection_matrix, 1, GL_FALSE, main_camera.projection_matrix.m);
-
-				// color selected spheres
-				for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
-
-					glUniformMatrix4fv(vbo_sphere_model_matrix, 1, GL_FALSE, model_matrices[i].m);
-					
-					glBindVertexArray(vao_sphere);
-					glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_points);
-					glBindBuffer(GL_ARRAY_BUFFER, vbo_sphere_normals);
-					glBindBuffer(GL_UNIFORM_BUFFER, vbo_lights_handle);
-
-					glDrawArrays(GL_TRIANGLES, 0, point_count);
-				}
-			}
 
 			// draw spheres - work in progress
 			if (true) {
@@ -654,12 +534,28 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 								
 				glUniformMatrix4fv(vbo_texture_model_matrix, 1, GL_FALSE, model_matrices[4].m);
 
-				glBindVertexArray(vao_texture_triangle);
-				glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_points);
-				glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_coords);
-				glBindTexture(GL_TEXTURE_2D, gl_texture);
+				// glBindVertexArray(vao_texture_triangle);
+				// glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_points);
+				// glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_coords);
+				// glBindTexture(GL_TEXTURE_2D, gl_texture);
 
 				glDrawArrays(GL_TRIANGLES, 0, 6);
+			}
+			else {
+				glUseProgram(flat_plane_shader_resources.shader_program_handle);
+				glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
+				glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+
+				model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
+
+				glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
+
+				glBindVertexArray(flat_plane_mesh_resources.vertex_array_object_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_points_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_normals_handle);
+				glBindBuffer(GL_UNIFORM_BUFFER, flat_plane_lighting_resources.vbo_lighting_handle);
+
+				glDrawArrays(GL_TRIANGLES, 0, flat_plane_mesh_resources.mesh_point_count);
 			}
 			
 			/* Swap front and back buffers */

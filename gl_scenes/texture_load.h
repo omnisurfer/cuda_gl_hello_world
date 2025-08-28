@@ -11,8 +11,8 @@
 #define PHONG_VERTEX_SHADER_FILE "phong_shader.vert"
 #define PHONG_FRAGMENT_SHADER_FILE "phong_shader.frag"
 
-#define TEXTURE_MESH_FILE "3d_objects/sphere.obj"
-#define MULTI_MESH_MESH_FILE "3d_objects/cube.obj"
+#define TEXTURE_SPHERE_MESH_FILE "3d_objects/assets/sphere.obj"
+#define MULTI_MESH_MESH_FILE "3d_objects/assets/cube.obj"
 
 #define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
 
@@ -80,7 +80,7 @@ void configure_resources_spheres(
 	GLfloat* texture_coordinates = NULL;	
 
 	std::string mesh_file_path = ASSETS_DIRECTORY;
-	mesh_file_path.append(TEXTURE_MESH_FILE);
+	mesh_file_path.append(TEXTURE_SPHERE_MESH_FILE);
 
 	load_obj_file(mesh_file_path.c_str(), vertex_points, texture_coordinates, vertex_normals, point_count);
 
