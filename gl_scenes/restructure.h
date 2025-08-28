@@ -458,10 +458,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	restructured_init_lights(lights, 3);
 
-	const float sphere_radius = 1.0f;
-
-	GLuint vbo_lights_handle;
-	GLuint light_block_location = glGetUniformBlockIndex(restructured_lighting_shader_program, "light_source");
+	const float sphere_radius = 1.0f;	
 
 	int size_of_lights_in_bytes = sizeof(lights);
 
@@ -475,6 +472,9 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		number_of_lights,
 		size_of_lights_in_bytes
 	);
+
+	flat_plane_lighting_resources.associated_shader_program_handle = flat_plane_shader_resources.shader_program_handle;
+	flat_plane_lighting_resources.vbo_block_lights_location_handle = glGetUniformBlockIndex(flat_plane_lighting_resources.associated_shader_program_handle, "light_source");
 
 	// Flat Plane
 	configure_scene_lighting(
