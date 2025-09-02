@@ -11,8 +11,8 @@
 #define PHONG_VERTEX_SHADER_FILE "phong_shader.vert"
 #define PHONG_FRAGMENT_SHADER_FILE "phong_shader.frag"
 
-#define TEXTURE_SPHERE_MESH_FILE "3d_objects/assets/sphere.obj"
-#define MULTI_MESH_MESH_FILE "3d_objects/assets/cube.obj"
+#define TEXTURE_SPHERE_MESH_FILE "sphere.obj"
+#define MULTI_MESH_MESH_FILE "cube.obj"
 
 #define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
 

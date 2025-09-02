@@ -5,6 +5,10 @@
 #include <cuda_gl_camera.h>
 #include <cuda_gl_lighting.h>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #define FLAT_PLANE_VERTEX_SHADER_FILE "restructured/flat_plane_shader.vert"
 #define FLAT_PLANE_FRAGMENT_SHADER_FILE "restructured/flat_plane_shader.frag"
 
@@ -203,130 +207,37 @@ int configure_scene_lighting(gl_lighting_resources& gl_lighting_resources, Light
 	return 0;
 }
 
-void restructured_init_textures_points(GLfloat *texture_triangle_points, int number_of_triangles) {
-	
-	float _texture_triangle_points[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f
-	};
+// WIP_20250902 ASSIMP Import Hello World
+/* https://the-asset-importer-lib-documentation.readthedocs.io/en/latest/usage/use_the_lib.html */
 
-	for (int i = 0; i < number_of_triangles * 9; i++) {
-		texture_triangle_points[i] = _texture_triangle_points[i];
-	}	
-}
+bool import_mesh_from_file(const std::string& pFile) {
 
-void restructured_configure_resources_texture(
-	GLuint& vao_texture,
-	GLuint& vbo_textrue_points,
-	GLuint& vbo_texture_normals,
-	GLuint& vbo_textrue_coords,
-	mat4* model_matrices,
-	vec3* model_positions_world,
-	GLfloat* tex_triangle_points,
-	int size_of_tex_triangle_points,
-	GLfloat* tex_triangle_coords,
-	int size_of_tex_triangle_coords,
-	int& point_count
-) {
+	// Create an instance of the Importer Class
+	Assimp::Importer importer;
 
-	// TODO: dummy normals with nothing in it since I have no normal vectors for the triangle face
-	GLfloat* vertex_normals = NULL;
+	const aiScene* scene = importer.ReadFile(pFile,
+		aiProcess_CalcTangentSpace		|
+		aiProcess_Triangulate			|
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_SortByPType
+	);
 
-	// vertex normals
-	glGenBuffers(1, &vbo_texture_normals);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_normals);
-	glBufferData(GL_ARRAY_BUFFER, 3 * point_count * sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
+	if (nullptr == scene) {
+		printf("failed to import mesh!\n");
 
-	glGenVertexArrays(1, &vao_texture);
-	glBindVertexArray(vao_texture);
-
-	glGenBuffers(1, &vbo_textrue_points);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_points);
-	glBufferData(GL_ARRAY_BUFFER, size_of_tex_triangle_points, tex_triangle_points, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_points);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
-
-	glGenBuffers(1, &vbo_textrue_coords);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_coords);
-	glBufferData(GL_ARRAY_BUFFER, size_of_tex_triangle_coords, tex_triangle_coords, GL_STATIC_DRAW);
-
-	// glBindBuffer(GL_ARRAY_BUFFER, vbo_textrue_coords);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, 0, NULL); // noramlize
-	glEnableVertexAttribArray(2);
-
-	// temp use of model matrix postion 4 to test placing the texure model.	
-	model_matrices[4] = translate(identity_mat4(), model_positions_world[4]);
-}
-
-int restructured_configure_shaders_texture(
-	CUDAGLCommon* cuda_gl_common, 
-	GLuint& gl_texture, 
-	GLuint& vbo_view_matrix, 
-	GLuint& vbo_projection_matrix, 
-	GLuint& vbo_model_matrix
-) {
-
-	std::string texture_map_file_path = THIRD_PARTY_ASSETS_DIRECTORY;
-	texture_map_file_path.append(CUBE_MAP_FILE_DIRECTORY);
-
-	/* shaders */
-	cuda_gl_common->vertex_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->vertex_shader_file_path.append(FLAT_PLANE_VERTEX_SHADER_FILE);
-
-	cuda_gl_common->frag_shader_file_path = SHADER_DIRECTORY;
-	cuda_gl_common->frag_shader_file_path.append(FLAT_PLANE_FRAGMENT_SHADER_FILE);
-
-	cuda_gl_common->shader_program = cuda_gl_common->compile_and_link_shader_program_from_files(cuda_gl_common->vertex_shader_file_path.c_str(), cuda_gl_common->frag_shader_file_path.c_str());
-	
-	restructured_texture_shader_program = cuda_gl_common->shader_program;
-
-	vbo_view_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "view_matrix");
-	vbo_projection_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "projection_matrix");
-
-	vbo_model_matrix = glGetUniformLocation(cuda_gl_common->shader_program, "model_matrix");
-
-	if (restructured_texture_shader_program <= 0)
-	{
-		fprintf(stderr, "ERROR: could not compile shader_program.");
-		glfwTerminate();
-		return 0;
-	}
-	else {
-		// printf("tex vbo_view %i vbo_proj %i vbo_model %i\n", vbo_view_matrix, vbo_projection_matrix, vbo_model_matrix);
-	}
-	
-	if (true) {
-		glGenTextures(1, &gl_texture);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, gl_texture);
-
-		bool load_texture_ok = cuda_gl_common->load_texture_into_device_memory(std::string(texture_map_file_path).append("posz.png").c_str());
-
-		if (!load_texture_ok) {
-			printf("Texture failed to load properly!\n");
-		}
-
-		glGenerateMipmap(GL_TEXTURE_2D);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-		GLfloat max_ansio = 0.0f;
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_ansio);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_ansio);
+		return false;
 	}
 
-	return 0;
+	// TODO return the mesh data?
+
+	return true;
 }
 
-/* From 09_texture_load */
+/* Restructure goals:
+* 1) general code cleanup, more generalized methods.
+* 2) transition to using ASSIMP for model importing.
+* 3) transition to using deferred shading to enable rendering in phases.
+*/
 int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			
 	int window_width, window_height;
@@ -388,66 +299,9 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	configure_shader_resources(cuda_gl_common, flat_plane_shader_resources);
 #pragma endregion
 
-#pragma region Textures - DEPRECATED
-	if (false) {
-		/* 2d texture plane geometry */
-		const int number_of_triangles = 2;
-		const int points_per_triangle = 9;
-		const int number_of_triangle_points = number_of_triangles * points_per_triangle;
+#pragma region Texture application
 
-		GLfloat tex_triangle_points[number_of_triangle_points];
-
-		restructured_init_textures_points(tex_triangle_points, number_of_triangles);
-
-		GLfloat tex_triangle_coords[] = {
-			0.0f, 1.0f,
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f
-		};
-
-		/*
-		* May need to rethink how I use VAOs
-		* https://stackoverflow.com/questions/59595805/what-is-the-best-way-to-draw-multiple-vao-using-the-same-shader-but-not-having-t
-		* https://stackoverflow.com/questions/14249634/opengl-vaos-and-multiple-buffers
-		*/
-
-		GLuint vao_texture_triangle;
-		GLuint vbo_texture_triangle_points;
-		GLuint vbo_texture_triangle_coords;
-		// TBD for triangle normals.
-		GLuint vbo_texture_triangle_normals;
-
-		GLuint gl_texture = 0;
-
-		int size_of_triangle_points = sizeof(tex_triangle_points);
-		int size_of_tex_triangle_coords = sizeof(tex_triangle_coords);
-
-		restructured_configure_resources_texture(
-			vao_texture_triangle,
-			vbo_texture_triangle_points,
-			vbo_texture_triangle_coords,
-			vbo_texture_triangle_normals,
-			model_matrices,
-			model_positions_world,
-			tex_triangle_points,
-			size_of_triangle_points,
-			tex_triangle_coords,
-			size_of_tex_triangle_coords,
-			point_count
-		);
-
-		restructured_configure_shaders_texture(cuda_gl_common, gl_texture, vbo_texture_view_matrix, vbo_texture_projection_matrix, vbo_texture_model_matrix);
-	}
-	else {
-
-	}
-#pragma endregion
-
-#pragma region Texture
+	/* TODO: See defered shading goal */
 
 #pragma endregion
 		
