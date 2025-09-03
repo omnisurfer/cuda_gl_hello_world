@@ -33,6 +33,39 @@ extern "C" {
 	);
 }
 
+
+// TODO see if this can be put into the class or if this is OK here...
+struct gl_camera_resources {
+	// TODO may need to rethink how the model matrix will be handled
+	GLuint vbo_model_matrix_handle;
+	GLuint vbo_projection_matrix_handle;
+	GLuint vbo_view_matrix_handle;
+};
+
+struct gl_shader_resources {
+	std::string shader_directory_path;
+	std::string vertex_shader_filename;
+	std::string frag_shader_filename;
+	GLuint shader_program_handle;
+	gl_camera_resources gl_camera_resources;
+};
+
+struct gl_lighting_resources {
+	GLuint vbo_lighting_handle;
+	GLuint vbo_block_lights_location_handle;
+	GLuint associated_shader_program_handle;
+};
+
+struct gl_mesh_resources {
+	GLuint vertex_array_object_handle;
+	GLuint vbo_mesh_points_handle;
+	GLuint vbo_mesh_normals_handle;
+	GLuint vbo_mesh_texture_cordinates_handle;
+	mat4 model_position_matrix;
+	vec3 model_position;
+	int mesh_point_count;
+};
+
 class CUDAGLCommon {
 
 	typedef void (*scene_key_callback_ptr)(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -41,12 +74,23 @@ class CUDAGLCommon {
 	scene_key_callback_ptr scene_key_callback_function = nullptr;
 	scene_mouse_button_callback_ptr scene_mouse_button_callback_function = nullptr;
 
+private:
+	// this must be in scope/presnt so that the aiScene pointers it owns don't drop out of scope
+	Assimp::Importer importer;
+
 public:
 	GLuint shader_program;
 	std::string vertex_shader_file_path;
 	std::string frag_shader_file_path;
 
 public:
+
+	CUDAGLCommon() {
+		printf("Initializing CUDAGLcommon\n");		
+	}
+	~CUDAGLCommon() {
+		printf("Destorying CUDAGLcommon\n");
+	}
 		
 	void set_opengl_flags() {
 		/* opengl configuration */
@@ -237,5 +281,34 @@ public:
 		_input_image_data = nullptr;
 
 		return processed_ok;
+	}
+
+	/* ASSIMP */
+	// WIP_20250902 ASSIMP Import Hello World
+	const aiScene* assimp_scene_from_file(const std::string& mesh_file) {
+		
+		const aiScene* ai_scene = new aiScene();
+
+		if (nullptr == ai_scene) {
+			printf("Failed to initialize aiScene\n");
+
+			return nullptr;
+		}
+
+		ai_scene = importer.ReadFile(mesh_file,
+			aiProcess_CalcTangentSpace |
+			aiProcess_Triangulate |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType
+		);
+						
+		printf("mesh[0] vertices count %i\n", ai_scene->mMeshes[0]->mNumVertices);
+
+		return ai_scene;		
+	}
+
+	void extract_mesh_from_assimp_scene(const aiScene* ai_scene, gl_mesh_resources& gl_mesh_resources) {
+
+		printf("mesh[0] vertices count %i\n", ai_scene->mMeshes[0]->mNumVertices);
 	}
 };

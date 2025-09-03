@@ -5,10 +5,6 @@
 #include <cuda_gl_camera.h>
 #include <cuda_gl_lighting.h>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 #define FLAT_PLANE_VERTEX_SHADER_FILE "restructured/flat_plane_shader.vert"
 #define FLAT_PLANE_FRAGMENT_SHADER_FILE "restructured/flat_plane_shader.frag"
 
@@ -17,7 +13,7 @@
 
 #define SPHERE_MESH_FILE "sphere.obj"
 #define FLAT_PLANE_MESH_FILE "flat_plane.obj"
-#define MULTI_MESH_MESH_FILE "cube.obj"
+#define BUNNY_MESH_FILE "bunny.obj"
 
 #define CUBE_MAP_FILE_DIRECTORY "cube_maps/Yokohama3/"
 
@@ -28,37 +24,6 @@ CUDAGLUserInput user_input;
 
 GLuint restructured_lighting_shader_program = 0;
 GLuint restructured_texture_shader_program = 0;
-
-struct gl_camera_resources {
-	// TODO may need to rethink how the model matrix will be handled
-	GLuint vbo_model_matrix_handle;
-	GLuint vbo_projection_matrix_handle;
-	GLuint vbo_view_matrix_handle;
-};
-
-struct gl_shader_resources {
-	std::string shader_directory_path;
-	std::string vertex_shader_filename;
-	std::string frag_shader_filename;
-	GLuint shader_program_handle;
-	gl_camera_resources gl_camera_resources;
-};
-
-struct gl_lighting_resources {
-	GLuint vbo_lighting_handle;
-	GLuint vbo_block_lights_location_handle;
-	GLuint associated_shader_program_handle;
-};
-
-struct gl_mesh_resources {	
-	GLuint vertex_array_object_handle;
-	GLuint vbo_mesh_points_handle;
-	GLuint vbo_mesh_normals_handle;
-	GLuint vbo_mesh_texture_cordinates_handle;
-	mat4 model_position_matrix;
-	vec3 model_position;
-	int mesh_point_count;
-};
 
 void restructured_init_lights(Light* lights, int number_of_lights) {
 
@@ -207,39 +172,13 @@ int configure_scene_lighting(gl_lighting_resources& gl_lighting_resources, Light
 	return 0;
 }
 
-// WIP_20250902 ASSIMP Import Hello World
-/* https://the-asset-importer-lib-documentation.readthedocs.io/en/latest/usage/use_the_lib.html */
-
-bool import_mesh_from_file(const std::string& pFile) {
-
-	// Create an instance of the Importer Class
-	Assimp::Importer importer;
-
-	const aiScene* scene = importer.ReadFile(pFile,
-		aiProcess_CalcTangentSpace		|
-		aiProcess_Triangulate			|
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_SortByPType
-	);
-
-	if (nullptr == scene) {
-		printf("failed to import mesh!\n");
-
-		return false;
-	}
-
-	// TODO return the mesh data?
-
-	return true;
-}
-
 /* Restructure goals:
 * 1) general code cleanup, more generalized methods.
 * 2) transition to using ASSIMP for model importing.
 * 3) transition to using deferred shading to enable rendering in phases.
 */
-int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
-			
+int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {			
+
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
 
@@ -258,11 +197,22 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	);
 
 	main_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));
-		
-	GLuint vbo_texture_view_matrix;
-	GLuint vbo_texture_projection_matrix;
-	GLuint vbo_texture_model_matrix;
-		
+
+#pragma region ASSIMP DEBUG
+	/* Assimp import debug */
+
+	std::string asset_filename_and_directory = ASSETS_DIRECTORY;
+	asset_filename_and_directory.append(BUNNY_MESH_FILE);
+	const aiScene* ai_scene = cuda_gl_common->assimp_scene_from_file(asset_filename_and_directory);
+
+	printf("mesh[0] vertices count %i\n", ai_scene->mMeshes[0]->mNumVertices);
+
+	gl_mesh_resources bunny_mesh_resources;
+
+	cuda_gl_common->extract_mesh_from_assimp_scene(ai_scene, bunny_mesh_resources);
+
+#pragma endregion
+			
 #pragma region Sphere Geometry and Shaders
 	const int number_of_model_positions = 5;
 
@@ -380,37 +330,21 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				}
 			}
 
-			// draw the texture model
-			if (false) {
-				glUseProgram(restructured_texture_shader_program);
-				glUniformMatrix4fv(vbo_texture_view_matrix, 1, GL_FALSE, main_camera.view_matrix.m);
-				glUniformMatrix4fv(vbo_texture_projection_matrix, 1, GL_FALSE, main_camera.projection_matrix.m);
-								
-				glUniformMatrix4fv(vbo_texture_model_matrix, 1, GL_FALSE, model_matrices[4].m);
+			// draw the texture model - WIP
+			glUseProgram(flat_plane_shader_resources.shader_program_handle);
+			glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
+			glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
 
-				// glBindVertexArray(vao_texture_triangle);
-				// glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_points);
-				// glBindBuffer(GL_ARRAY_BUFFER, vbo_texture_triangle_coords);
-				// glBindTexture(GL_TEXTURE_2D, gl_texture);
+			model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
 
-				glDrawArrays(GL_TRIANGLES, 0, 6);
-			}
-			else {
-				glUseProgram(flat_plane_shader_resources.shader_program_handle);
-				glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
-				glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+			glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
 
-				model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
+			glBindVertexArray(flat_plane_mesh_resources.vertex_array_object_handle);
+			glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_points_handle);
+			glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_normals_handle);
+			glBindBuffer(GL_UNIFORM_BUFFER, flat_plane_lighting_resources.vbo_lighting_handle);
 
-				glUniformMatrix4fv(flat_plane_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
-
-				glBindVertexArray(flat_plane_mesh_resources.vertex_array_object_handle);
-				glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_points_handle);
-				glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_normals_handle);
-				glBindBuffer(GL_UNIFORM_BUFFER, flat_plane_lighting_resources.vbo_lighting_handle);
-
-				glDrawArrays(GL_TRIANGLES, 0, flat_plane_mesh_resources.mesh_point_count);
-			}
+			glDrawArrays(GL_TRIANGLES, 0, flat_plane_mesh_resources.mesh_point_count);			
 			
 			/* Swap front and back buffers */
 			glfwSwapBuffers(window);

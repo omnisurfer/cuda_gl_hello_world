@@ -19,3 +19,9 @@
 
 #include <obj_parser.h>
 #include <maths_funcs.h>
+
+// assimp
+/* https://the-asset-importer-lib-documentation.readthedocs.io/en/latest/usage/use_the_lib.html */
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
