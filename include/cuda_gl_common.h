@@ -79,7 +79,7 @@ private:
 	Assimp::Importer importer;
 
 public:
-	GLuint shader_program;
+	GLuint shader_program = NULL;
 	std::string vertex_shader_file_path;
 	std::string frag_shader_file_path;
 
@@ -283,8 +283,7 @@ public:
 		return processed_ok;
 	}
 
-	/* ASSIMP */
-	// WIP_20250902 ASSIMP Import Hello World
+	/* ASSIMP */	
 	const aiScene* assimp_scene_from_file(const std::string& mesh_file) {
 		
 		const aiScene* ai_scene = new aiScene();
@@ -295,11 +294,9 @@ public:
 			return nullptr;
 		}
 
-		ai_scene = importer.ReadFile(mesh_file,
-			aiProcess_CalcTangentSpace |
-			aiProcess_Triangulate |
-			aiProcess_JoinIdenticalVertices |
-			aiProcess_SortByPType
+		ai_scene = importer.ReadFile(mesh_file,			
+			aiProcess_Triangulate		|
+			aiProcess_GenSmoothNormals			
 		);
 						
 		printf("mesh[0] vertices count %i\n", ai_scene->mMeshes[0]->mNumVertices);
@@ -307,8 +304,129 @@ public:
 		return ai_scene;		
 	}
 
-	void extract_mesh_from_assimp_scene(const aiScene* ai_scene, gl_mesh_resources& gl_mesh_resources) {
+	bool assimp_extract_and_load_mesh_from_scene(const aiScene* ai_scene, gl_mesh_resources& gl_mesh_resources) {
+
+		bool success = true;
 
 		printf("mesh[0] vertices count %i\n", ai_scene->mMeshes[0]->mNumVertices);
+
+		gl_mesh_resources.mesh_point_count = ai_scene->mMeshes[0]->mNumVertices;
+		
+		aiMesh* ai_mesh = ai_scene->mMeshes[0];
+
+		GLfloat* points = NULL;
+		GLfloat* normals = NULL;
+		GLfloat* texcoords = NULL;
+	
+		if (ai_mesh->HasPositions()) {
+
+			// create the VAO
+			glGenVertexArrays(1, &(gl_mesh_resources.vertex_array_object_handle));
+			glBindVertexArray(gl_mesh_resources.vertex_array_object_handle);
+			
+			points = (GLfloat*)malloc(gl_mesh_resources.mesh_point_count * 3 * sizeof(GLfloat));
+			
+			if (points) {
+
+				// extract the points
+				for (int i = 0; i < gl_mesh_resources.mesh_point_count; i++) {
+				
+					const aiVector3D* ai_vp = &(ai_mesh->mVertices[i]);
+
+					points[i * 3] = (GLfloat)ai_vp->x;
+					points[i * 3 + 1] = (GLfloat)ai_vp->y;
+					points[i * 3 + 2] = (GLfloat)ai_vp->z;
+				}
+
+				// place into buffer			
+				glGenBuffers(1, &gl_mesh_resources.vbo_mesh_points_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, gl_mesh_resources.vbo_mesh_points_handle);
+				glBufferData(
+					GL_ARRAY_BUFFER,
+					3 * gl_mesh_resources.mesh_point_count * sizeof(GLfloat),
+					points,
+					GL_STATIC_DRAW
+				);
+				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+				glEnableVertexAttribArray(0);
+				free(points);
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
+
+		if (ai_mesh->HasNormals()) {
+			
+			normals = (GLfloat*)malloc(gl_mesh_resources.mesh_point_count * 3 * sizeof(GLfloat));
+			
+			if (normals) {
+
+				// extract the normals
+				for (int i = 0; i < gl_mesh_resources.mesh_point_count; i++) {
+
+					const aiVector3D* ai_vn = &(ai_mesh->mNormals[i]);
+
+					normals[i * 3] = (GLfloat)ai_vn->x;
+					normals[i * 3 + 1] = (GLfloat)ai_vn->y;
+					normals[i * 3 + 2] = (GLfloat)ai_vn->z;
+				}
+
+				// place into buffer
+				glGenBuffers(1, &gl_mesh_resources.vbo_mesh_normals_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, gl_mesh_resources.vbo_mesh_normals_handle);
+				glBufferData(
+					GL_ARRAY_BUFFER,
+					3 * gl_mesh_resources.mesh_point_count * sizeof(GLfloat),
+					normals,
+					GL_STATIC_DRAW
+				);
+				glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+				glEnableVertexAttribArray(1);
+				free(normals);
+			}
+			else {
+				return false;
+			}
+		}
+
+		// Assuming a single texture?
+		if (ai_mesh->HasTextureCoords(0)) {
+			
+			texcoords = (GLfloat*)malloc(gl_mesh_resources.mesh_point_count * 2 * sizeof(GLfloat));
+
+			if (texcoords) {
+				
+				// extract the texcoords
+				for (int i = 0; i < gl_mesh_resources.mesh_point_count; i++) {
+
+					const aiVector3D* ai_vt = &(ai_mesh->mTextureCoords[0][i]);
+
+					texcoords[i * 2] = (GLfloat)ai_vt->x;
+					texcoords[i * 2 + 1] = (GLfloat)ai_vt->y;
+				}
+
+				// place into buffer
+				glGenBuffers(1, &gl_mesh_resources.vbo_mesh_texture_cordinates_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, gl_mesh_resources.vbo_mesh_texture_cordinates_handle);
+				glBufferData(
+					GL_ARRAY_BUFFER,
+					2 * gl_mesh_resources.mesh_point_count * sizeof(GLfloat),
+					texcoords,
+					GL_STATIC_DRAW
+				);
+				glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+				glEnableVertexAttribArray(2);
+				free(texcoords);
+			}
+			else {
+				return false;
+			}
+		}
+	
+		return success;
 	}
 };
