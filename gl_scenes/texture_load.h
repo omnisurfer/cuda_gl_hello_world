@@ -57,7 +57,7 @@ void init_lights(Light* lights, int number_of_lights) {
 	lights[2].specular_exponent = 100.0f;
 }
 
-void init_model_positions(vec3* model_positions, int number_of_models) {
+void texture_init_model_positions(vec3* model_positions, int number_of_models) {
 	
 	model_positions[0] = vec3(-2.0, 0.0, 0.0);
 	model_positions[1] = vec3(2.0, 0.0, 0.0);
@@ -312,7 +312,7 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	vec3 model_positions_world[number_of_model_positions];
 
-	init_model_positions(model_positions_world, number_of_model_positions);
+	texture_init_model_positions(model_positions_world, number_of_model_positions);
 	
 	mat4 model_matrices[TEXTURE_NUM_OF_SPHERES + 1];
 

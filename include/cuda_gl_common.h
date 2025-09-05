@@ -294,9 +294,9 @@ public:
 			return nullptr;
 		}
 
-		ai_scene = importer.ReadFile(mesh_file,			
+		ai_scene = importer.ReadFile(mesh_file, 
 			aiProcess_Triangulate		|
-			aiProcess_GenSmoothNormals			
+			aiProcess_GenSmoothNormals
 		);
 						
 		printf("mesh[0] vertices count %i\n", ai_scene->mMeshes[0]->mNumVertices);

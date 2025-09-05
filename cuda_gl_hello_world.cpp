@@ -156,11 +156,9 @@ int main(int arc, char** argvv) {
 		draw_texture_load(window, &cuda_gl_common);
 	}
 
-	// restucture work
+	// code restucture work
 	if (true) {
-			
-		printf("START OF RESTRUCTURE\n");
-
+					
 		window = cuda_gl_common.init_gl(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 		if (!window)
