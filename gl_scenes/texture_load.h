@@ -403,13 +403,6 @@ int draw_texture_load(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 		
 		configure_shaders_texture(cuda_gl_common, gl_texture, vbo_texture_view_matrix, vbo_texture_projection_matrix, vbo_texture_model_matrix);
 	}
-
-	// render a second mesh here
-	GLuint vao_monkey;
-	GLuint vbo_monkey_points;
-	GLuint vbo_monkey_normals;
-
-
 #pragma endregion
 		
 	cuda_gl_common->set_opengl_flags();

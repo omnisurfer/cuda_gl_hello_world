@@ -207,40 +207,59 @@ GLuint CUDAGLCommon::compile_and_link_shader_program_from_files(const char* vert
 	// printf("Fragment shader:\n%s\n", fragment_shader_string.c_str());
 	const char* fragment_shader = fragment_shader_string.c_str();
 
-	// shaders	
-	GLuint vertex_shader_source = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader_source, 1, &vertex_shader, NULL);
-	glCompileShader(vertex_shader_source);
+	if (vertex_shader_string == "" && fragment_shader_string == "") {
+		fprintf(stderr, "No vertex and fragment shader to compile...\n");
+		return -1;
+	}
 
+	// shaders
 	int params = -1;
-	glGetShaderiv(vertex_shader_source, GL_COMPILE_STATUS, &params);
+	
+	GLuint vertex_shader_source = -1;
+	GLuint fragment_shader_source = -1;
 
-	if (GL_TRUE != params) {
-		int max_length = 2048, actual_length = 0;
-		char vslog[2048];
-		glGetShaderInfoLog(vertex_shader_source, max_length, &actual_length, vslog);
-		fprintf(stderr, "ERROR: Vertex shader index %u did not compile.\n%s\n", vertex_shader_source, vslog);
-		return 1;
-	}
-
-	GLuint fragment_shader_source = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader_source, 1, &fragment_shader, NULL);
-	glCompileShader(fragment_shader_source);
-
-	glGetShaderiv(fragment_shader_source, GL_COMPILE_STATUS, &params);
-
-	if (GL_TRUE != params) {
-		int max_length = 2048, actual_length = 0;
-		char fslog[2048];
-		glGetShaderInfoLog(fragment_shader_source, max_length, &actual_length, fslog);
-		fprintf(stderr, "ERROR: Fragment shader index %u did not compile.\n%s\n", fragment_shader_source, fslog);
-		return 1;
-	}
-
-	// compile into shader kernel
 	GLuint shader_program = glCreateProgram();
-	glAttachShader(shader_program, fragment_shader_source);
-	glAttachShader(shader_program, vertex_shader_source);
+
+	if (vertex_shader_string != "") {
+	
+		vertex_shader_source = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vertex_shader_source, 1, &vertex_shader, NULL);
+		glCompileShader(vertex_shader_source);
+		
+		glGetShaderiv(vertex_shader_source, GL_COMPILE_STATUS, &params);
+
+		if (GL_TRUE != params) {
+			int max_length = 2048, actual_length = 0;
+			char vslog[2048];
+			glGetShaderInfoLog(vertex_shader_source, max_length, &actual_length, vslog);
+			fprintf(stderr, "ERROR: Vertex shader index %u did not compile.\n%s\n", vertex_shader_source, vslog);
+			return -1;
+		}
+		else {
+			glAttachShader(shader_program, vertex_shader_source);
+		}
+	}	
+
+	if (fragment_shader_string != "") {
+
+		fragment_shader_source = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fragment_shader_source, 1, &fragment_shader, NULL);
+		glCompileShader(fragment_shader_source);
+
+		glGetShaderiv(fragment_shader_source, GL_COMPILE_STATUS, &params);
+
+		if (GL_TRUE != params) {
+			int max_length = 2048, actual_length = 0;
+			char fslog[2048];
+			glGetShaderInfoLog(fragment_shader_source, max_length, &actual_length, fslog);
+			fprintf(stderr, "ERROR: Fragment shader index %u did not compile.\n%s\n", fragment_shader_source, fslog);
+			return -1;
+		}
+		else {
+			glAttachShader(shader_program, fragment_shader_source);
+		}
+	}
+			
 	glLinkProgram(shader_program);
 
 	glGetProgramiv(shader_program, GL_LINK_STATUS, &params);
@@ -250,7 +269,7 @@ GLuint CUDAGLCommon::compile_and_link_shader_program_from_files(const char* vert
 		char plog[2048];
 		glGetProgramInfoLog(shader_program, max_length, &actual_length, plog);
 		fprintf(stderr, "ERROR: Could not link shader program GL index %u.\n%s\n", shader_program, plog);
-		return 1;
+		return -1;
 	}
 
 	return shader_program;
