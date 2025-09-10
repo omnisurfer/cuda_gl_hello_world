@@ -154,6 +154,10 @@ int configure_scene_lighting(gl_lighting_resources& gl_lighting_resources, Light
 *	a) textures?
 *	b) lighting
 */
+/* Example code:
+* https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/37_deferred_shading/main.cpp
+* https://github.com/JoeyDeVries/LearnOpenGL/tree/master/src/5.advanced_lighting/8.1.deferred_shading
+*/
 int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {			
 
 	int window_width, window_height;
@@ -267,7 +271,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// draw spheres - work in progress
+			// draw sphere meshes
 			if (true) {
 				
 				glUseProgram(phong_lighting_shader_resources.shader_program_handle);
@@ -289,11 +293,11 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				}
 			}
 
-			// draw bunny model - WIP
+			// draw bunny mesh
 			if (true) {
-				glUseProgram(phong_lighting_shader_resources.shader_program_handle);
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+				// glUseProgram(phong_lighting_shader_resources.shader_program_handle);
+				// glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
+				// glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
 
 				model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
 
