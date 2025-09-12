@@ -27,33 +27,36 @@ GLuint restructured_texture_shader_program = 0;
 
 void init_light_positions(Light* lights, int number_of_lights) {
 
+	// light properties
 	lights[0].light_position_world = vec4(0.0f, 0.0f, 5.0f, 1.0f);
 	lights[0].Ls = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	lights[0].Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 	lights[0].La = vec4(0.1f, 0.1f, 0.1f, 1.0f);
-
-	lights[0].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lights[0].Kd = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lights[0].specular_exponent = 100.0f;
 	
 	lights[1].light_position_world = vec4(0.0f, 0.0f, -5.0f, 1.0f);
 	lights[1].Ls = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	lights[1].Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 	lights[1].La = vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
-	lights[1].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lights[1].Kd = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	lights[1].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lights[1].specular_exponent = 100.0f;
-
 	lights[2].light_position_world = vec4(0.0f, 5.0f, 0.0f, 1.0f);
 	lights[2].Ls = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	lights[2].Ld = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 	lights[2].La = vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
+	// TODO need to seperate from light, at least the albedo part (i.e. texture).
+	// object surface properties
+	lights[0].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[0].Kd = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[0].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[0].specular_exponent = 100.0f;
+
+	lights[1].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[1].Kd = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	lights[1].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[1].specular_exponent = 100.0f;
+	
 	lights[2].Ks = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lights[2].Kd = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	lights[2].Kd = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 	lights[2].Ka = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	lights[2].specular_exponent = 100.0f;
 }
@@ -210,6 +213,14 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 #pragma region Texture application
 	gl_shader_resources texture_shader_resources;
 
+
+	/* Prelim shader "schedule"
+	* Vert + Texture Frag > Ouputput g_textures: position, normals, and albedo/specular
+	* Bind g_texture buffers
+	* Just use Phong Frag (unsure if this can work this way) > output frag color?
+	*/
+
+
 	GLuint gl_texture_handle = 0;
 
 	/* TODO: See deferred shading goal */	
@@ -294,10 +305,12 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			}
 
 			// draw bunny mesh
-			if (true) {
-				// glUseProgram(phong_lighting_shader_resources.shader_program_handle);
-				// glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
-				// glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+			if (false) {
+				/**/
+				glUseProgram(phong_lighting_shader_resources.shader_program_handle);
+				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
+				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+				/**/
 
 				model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
 

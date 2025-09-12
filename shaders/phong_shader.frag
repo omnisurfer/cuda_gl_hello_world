@@ -101,9 +101,7 @@ void main() {
 	
         for (int i = 0; i < number_of_lights; i++)
         {
-            Ia += lights[i].La * lights[i].Ka;
-            // normalizing on vec4 with w at 1.0 causes the calculated normal 
-            // direction to not work with the rest of the code for some reason...
+            Ia += lights[i].La * lights[i].Ka;            
             n_eye = normalize(vec4(normal_eye, 0.0));
 		
             light_position_eye = view_matrix * lights[i].light_position_world;

@@ -13,7 +13,6 @@ out vec2 texture_coordinates;
 void main() {
     
     texture_coordinates = texture_coords;
-        	        
-    // must remove model_matrix to get texure to render. model_matrix seems to be null...
+        	            
     gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vertex_position, 1.0);
 };

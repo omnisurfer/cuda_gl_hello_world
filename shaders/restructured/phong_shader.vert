@@ -7,11 +7,14 @@ layout(location = 2) in vec2 texture_coords;
 uniform mat4 model_matrix, view_matrix, projection_matrix;
 
 out vec3 position_eye, normal_eye;
+out vec2 texture_coordinates;
 
 void main() {
 	
 	position_eye = vec3( view_matrix * model_matrix * vec4( vertex_position, 1.0 ) );
 	normal_eye = vec3( view_matrix * model_matrix * vec4(vertex_normal, 0.0) );
+	
+    texture_coordinates = texture_coords;
 	
 	gl_Position = projection_matrix * vec4(position_eye, 1.0);
 };

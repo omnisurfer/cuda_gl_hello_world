@@ -2,23 +2,22 @@
 
 const int number_of_lights = 3;
 
-in vec3 position_eye, normal_eye;
-
 /* https://community.khronos.org/t/sending-an-array-of-structs-to-shader-via-an-uniform-buffer-object/75092 */
 /* https://registry.khronos.org/OpenGL/specs/gl/glspec45.core.pdf Pg. 137-138 */
 
-struct Light {	
+struct Light
+{
 	// fixed point light properties
-	vec4 light_position_world;    	
-	vec4 Ls;	
-	vec4 Ld;	
-	vec4 La;
+    vec4 light_position_world;
+    vec4 Ls;
+    vec4 Ld;
+    vec4 La;
     	
 	// surface reflectance
-	vec4 Ks;
-	vec4 Kd;	
-	vec4 Ka;
-	float specular_exponent;
+    vec4 Ks;
+    vec4 Kd;
+    vec4 Ka;
+    float specular_exponent;
     float padding0;
     float padding1;
     float padding2;
@@ -27,8 +26,11 @@ struct Light {
 uniform mat4 view_matrix;
 
 layout(std140) uniform light_source {
-    uniform Light lights[number_of_lights];
+uniform Light lights[number_of_lights];
 };
+
+in vec3 position_eye, normal_eye;
+in vec2 texture_coordinates;
 
 out vec4 frag_color;
 
@@ -39,7 +41,7 @@ void main() {
     float specular_factor;
     
     // vec3
-    if (true)
+    if (false)
     {
         vec3 Ia;
         vec3 Id;
@@ -101,9 +103,7 @@ void main() {
 	
         for (int i = 0; i < number_of_lights; i++)
         {
-            Ia += lights[i].La * lights[i].Ka;
-            // normalizing on vec4 with w at 1.0 causes the calculated normal 
-            // direction to not work with the rest of the code for some reason...
+            Ia += lights[i].La * lights[i].Ka;            
             n_eye = normalize(vec4(normal_eye, 0.0));
 		
             light_position_eye = view_matrix * lights[i].light_position_world;
@@ -128,6 +128,7 @@ void main() {
         vec4 Id_final = (Id) / number_of_lights;
         vec4 Ia_final = (Ia) / number_of_lights;
 
-        frag_color = (Is_final * 1.0) + (Id_final * 1.0) + (Ia_final * 1.0);
+        // frag_color = (Is_final * 1.0) + (Id_final * 1.0) + (Ia_final * 1.0);
+        frag_color = vec4(normal_eye, 1.0);
     }    
 };
