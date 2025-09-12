@@ -125,6 +125,9 @@ GLFWwindow* CUDAGLCommon::init_gl(int window_width, int window_height) {
 		return 0;
 	}
 
+	window_width_ = window_width;
+	window_height_ = window_height;
+
 	glfwMakeContextCurrent(window);
 	
 	/* Start glad for OpenGL functions */
@@ -236,7 +239,9 @@ GLuint CUDAGLCommon::compile_and_link_shader_program_from_files(const char* vert
 			return -1;
 		}
 		else {
-			glAttachShader(shader_program, vertex_shader_source);
+			// NOTE: can attach multiple shaders to a single program but must only have one main.
+			// maybe a different way to do try deferred shading?
+			glAttachShader(shader_program, vertex_shader_source);			
 		}
 	}	
 

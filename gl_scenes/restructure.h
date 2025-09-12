@@ -5,11 +5,9 @@
 #include <cuda_gl_camera.h>
 #include <cuda_gl_lighting.h>
 
-#define FLAT_PLANE_VERTEX_SHADER_FILE "restructured/flat_plane_shader.vert"
-#define FLAT_PLANE_FRAGMENT_SHADER_FILE "restructured/flat_plane_shader.frag"
-
-#define PHONG_VERTEX_SHADER_FILE "restructured/phong_shader.vert"
-#define PHONG_FRAGMENT_SHADER_FILE "restructured/phong_shader.frag"
+#define FIRST_PASS_VERTEX_SHADER_FILE "restructured/first_pass_geometry_shader.vert"
+#define FIRST_PASS_TEXTURE_FRAGMENT_SHADER_FILE "restructured/first_pass_texture_shader.frag"
+#define PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE "restructured/phong_lighting_pass_shader.frag"
 
 #define SPHERE_MESH_FILE "sphere.obj"
 #define FLAT_PLANE_MESH_FILE "flat_plane.obj"
@@ -131,6 +129,65 @@ int configure_texture_resources(CUDAGLCommon* cuda_gl_common, GLuint& gl_texture
 	return 0;
 }
 
+// TODO_20250912 - Configure G-Buffers
+int configure_g_buffer_texture_resources(const CUDAGLCommon* cuda_gl_common, gl_g_buffer_resources& gl_g_buffer_resources) {
+
+	// 0 is default (to screen) frame buffer - see deferred_shading.cpp example
+	// https://learnopengl.com/Advanced-Lighting/Deferred-Shading
+	// https://learnopengl.com/Advanced-OpenGL/Framebuffers
+
+	glGenFramebuffers(1, &gl_g_buffer_resources.g_buffer_handle);
+	glBindFramebuffer(GL_FRAMEBUFFER, gl_g_buffer_resources.g_buffer_handle);
+
+	// TODO_20250912: how would Io modify this if the window changes sizes?
+	int frame_width = cuda_gl_common->window_width_;
+	int frame_height = cuda_gl_common->window_height_;
+
+	// position color buffer
+	glGenTextures(1, &gl_g_buffer_resources.position_texture_handle);
+	glBindTexture(GL_TEXTURE_2D, gl_g_buffer_resources.position_texture_handle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, frame_width, frame_height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl_g_buffer_resources.position_texture_handle, 0);
+
+	// normal color buffer
+	glGenTextures(1, &gl_g_buffer_resources.normal_texture_handle);
+	glBindTexture(GL_TEXTURE_2D, gl_g_buffer_resources.normal_texture_handle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, frame_width, frame_height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gl_g_buffer_resources.normal_texture_handle, 0);
+
+	// albedo + specular color buffer
+	glGenTextures(1, &gl_g_buffer_resources.albedo_spec_texture_handle);
+	glBindTexture(GL_TEXTURE_2D, gl_g_buffer_resources.albedo_spec_texture_handle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame_width, frame_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gl_g_buffer_resources.albedo_spec_texture_handle, 0);
+
+	// specify color attachements to use for this framebuffer for rendering
+	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+
+	// attach a depth buffer
+	glGenRenderbuffers(1, &gl_g_buffer_resources.render_buffer_object_depth_handle);
+	glBindRenderbuffer(GL_RENDERBUFFER, gl_g_buffer_resources.render_buffer_object_depth_handle);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, frame_width, frame_height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gl_g_buffer_resources.render_buffer_object_depth_handle);
+
+	// check if framebuffer is complete
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		printf("Framebuffer not complete!\n");
+	}
+
+	// rebind to default framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return 0;
+}
+
 int configure_scene_lighting(gl_lighting_resources& gl_lighting_resources, Light* lights, int number_of_lights, int size_of_lights_in_bytes) {
 
 	glUniformBlockBinding(gl_lighting_resources.associated_shader_program_handle, gl_lighting_resources.vbo_block_lights_location_handle, 0);
@@ -159,9 +216,11 @@ int configure_scene_lighting(gl_lighting_resources& gl_lighting_resources, Light
 */
 /* Example code:
 * https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/37_deferred_shading/main.cpp
+* 
+* https://learnopengl.com/Advanced-Lighting/Deferred-Shading
 * https://github.com/JoeyDeVries/LearnOpenGL/tree/master/src/5.advanced_lighting/8.1.deferred_shading
 */
-int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {			
+int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	int window_width, window_height;
 	glfwGetWindowSize(window, &window_width, &window_height);
@@ -183,6 +242,15 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	main_camera.place_camera(vec3(0.0f, 0.0f, 10.0f));
 
 	std::string asset_filename_and_directory = ASSETS_DIRECTORY;
+
+#pragma region Configure G-Buffers
+
+	// WIP_20250912 - Figure out how to attach to the output of the first geometry pass...
+	gl_g_buffer_resources g_buffer_resources;
+
+	configure_g_buffer_texture_resources(cuda_gl_common, g_buffer_resources);
+
+#pragma endregion
 			
 #pragma region Geometry
 	const int number_of_model_positions = 5;
@@ -225,8 +293,8 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	/* TODO: See deferred shading goal */	
 	texture_shader_resources.shader_directory_path = SHADER_DIRECTORY;
-	texture_shader_resources.vertex_shader_filename = FLAT_PLANE_VERTEX_SHADER_FILE;
-	texture_shader_resources.frag_shader_filename = FLAT_PLANE_FRAGMENT_SHADER_FILE;
+	texture_shader_resources.vertex_shader_filename = FIRST_PASS_VERTEX_SHADER_FILE;
+	texture_shader_resources.frag_shader_filename = FIRST_PASS_TEXTURE_FRAGMENT_SHADER_FILE;
 
 	configure_and_compile_shader_resources(cuda_gl_common, texture_shader_resources);
 	bind_camera_matrices_to_shader_resources(texture_shader_resources);
@@ -234,15 +302,23 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 #pragma endregion
 		
 #pragma region Phong Lighting
-	gl_shader_resources phong_lighting_shader_resources;	
+	gl_shader_resources first_pass_geometry_shader_resources;	
 	gl_lighting_resources phong_lighting_handle_resources;
 
-	phong_lighting_shader_resources.shader_directory_path = SHADER_DIRECTORY;
-	phong_lighting_shader_resources.vertex_shader_filename = PHONG_VERTEX_SHADER_FILE;
-	phong_lighting_shader_resources.frag_shader_filename = PHONG_FRAGMENT_SHADER_FILE;
+	first_pass_geometry_shader_resources.shader_directory_path = SHADER_DIRECTORY;
+	first_pass_geometry_shader_resources.vertex_shader_filename = FIRST_PASS_VERTEX_SHADER_FILE;
+	first_pass_geometry_shader_resources.frag_shader_filename = ""; // PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
 
-	configure_and_compile_shader_resources(cuda_gl_common, phong_lighting_shader_resources);
-	bind_camera_matrices_to_shader_resources(phong_lighting_shader_resources);
+	configure_and_compile_shader_resources(cuda_gl_common, first_pass_geometry_shader_resources);
+	bind_camera_matrices_to_shader_resources(first_pass_geometry_shader_resources);
+
+	/* WIP_20250912 */
+	gl_shader_resources phong_lighting_pass_shader_resources;
+	phong_lighting_pass_shader_resources.shader_directory_path = SHADER_DIRECTORY;
+	phong_lighting_pass_shader_resources.vertex_shader_filename = ""; // FIRST_PASS_VERTEX_SHADER_FILE;
+	phong_lighting_pass_shader_resources.frag_shader_filename = PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
+	configure_and_compile_shader_resources(cuda_gl_common, phong_lighting_pass_shader_resources);
+	/**/
 
 	const int number_of_lights = 3;
 
@@ -252,7 +328,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	int size_of_lights_in_bytes = sizeof(lights);
 
-	phong_lighting_handle_resources.associated_shader_program_handle = phong_lighting_shader_resources.shader_program_handle;
+	phong_lighting_handle_resources.associated_shader_program_handle = phong_lighting_pass_shader_resources.shader_program_handle;
 	phong_lighting_handle_resources.vbo_block_lights_location_handle = glGetUniformBlockIndex(phong_lighting_handle_resources.associated_shader_program_handle, "light_source");
 	
 	configure_scene_lighting(
@@ -285,36 +361,45 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			// draw sphere meshes
 			if (true) {
 				
-				glUseProgram(phong_lighting_shader_resources.shader_program_handle);
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle , 1, GL_FALSE, main_camera.view_matrix.m);
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+				glUseProgram(first_pass_geometry_shader_resources.shader_program_handle);
+				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_view_matrix_handle , 1, GL_FALSE, main_camera.view_matrix.m);
+				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
 				
 				for (int i = 0; i < TEXTURE_NUM_OF_SPHERES; i++) {
 
 					model_matrices[i] = translate(identity_mat4(), model_positions_world[i]);
 
-					glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[i].m);
+					glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[i].m);
 
 					glBindVertexArray(sphere_mesh_resources.vertex_array_object_handle);
 					glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_points_handle);
 					glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_normals_handle);
-					glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
-
+					glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_texture_cordinates_handle);
+					// glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
+					
 					glDrawArrays(GL_TRIANGLES, 0, sphere_mesh_resources.mesh_point_count);
 				}
+			}
+
+			// render sphere lighting WIP
+			if (true) {
+
+				glUseProgram(phong_lighting_pass_shader_resources.shader_program_handle);
+				glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
+
 			}
 
 			// draw bunny mesh
 			if (false) {
 				/**/
-				glUseProgram(phong_lighting_shader_resources.shader_program_handle);
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+				glUseProgram(first_pass_geometry_shader_resources.shader_program_handle);
+				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
+				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
 				/**/
 
 				model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
 
-				glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
+				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
 
 				glBindVertexArray(bunny_mesh_resources.vertex_array_object_handle);
 				glBindBuffer(GL_ARRAY_BUFFER, bunny_mesh_resources.vbo_mesh_points_handle);
@@ -325,7 +410,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			}
 
 			// draw the texture model - WIP
-			if (true) {
+			if (false) {
 
 				// WIP - use the texutre fragment shader
 				if (true) {
@@ -348,13 +433,13 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 				// then add lighting
 				if (false) {
-					glUseProgram(phong_lighting_shader_resources.shader_program_handle);
-					glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
-					glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
+					glUseProgram(first_pass_geometry_shader_resources.shader_program_handle);
+					glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_view_matrix_handle, 1, GL_FALSE, main_camera.view_matrix.m);
+					glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
 
 					model_matrices[TEXTURE_NUM_OF_SPHERES] = translate(identity_mat4(), model_positions_world[TEXTURE_NUM_OF_SPHERES]);
 
-					glUniformMatrix4fv(phong_lighting_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
+					glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_model_matrix_handle, 1, GL_FALSE, model_matrices[TEXTURE_NUM_OF_SPHERES].m);
 
 					glBindVertexArray(flat_plane_mesh_resources.vertex_array_object_handle);
 					glBindBuffer(GL_ARRAY_BUFFER, flat_plane_mesh_resources.vbo_mesh_points_handle);

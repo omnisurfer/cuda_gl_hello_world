@@ -42,6 +42,15 @@ struct gl_camera_resources {
 	GLuint vbo_view_matrix_handle;
 };
 
+// TODO_20250912 - deferred shading g_buffer
+struct gl_g_buffer_resources {
+	GLuint g_buffer_handle;
+	GLuint position_texture_handle;
+	GLuint normal_texture_handle;
+	GLuint albedo_spec_texture_handle;
+	GLuint render_buffer_object_depth_handle;
+};
+
 struct gl_shader_resources {
 	std::string shader_directory_path;
 	std::string vertex_shader_filename;
@@ -83,6 +92,9 @@ public:
 	std::string vertex_shader_file_path;
 	std::string frag_shader_file_path;
 
+	int window_width_ = 0;
+	int window_height_ = 0;
+
 public:
 
 	CUDAGLCommon() {
@@ -101,7 +113,7 @@ public:
 		glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
 
 		// wire-frame mode
-		// glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_FRONT, GL_LINE);
 		// glPolygonMode(GL_BACK, GL_LINE);
 	}
 
