@@ -25,6 +25,11 @@ struct Light
 
 uniform mat4 view_matrix;
 
+// DEBUG TEXTURE SAMPLES
+// uniform sampler2D g_buffer_position;
+// uniform sampler2D g_buffer_normal;
+// uniform sampler2D g_buffer_albedo_spec;
+
 layout(std140) uniform light_source {
 uniform Light lights[number_of_lights];
 };
@@ -86,7 +91,8 @@ void main() {
         frag_color = vec4((Is_final * 1.0) + (Id_final * 1.0) + (Ia_final * 1.0), 1.0);
     }    
     // vec4
-    else {
+    else if (false)
+    {
     
         vec4 Ia;
         vec4 Id;
@@ -99,11 +105,11 @@ void main() {
 	
         vec4 surface_to_viewer_eye;
 	
-        vec4 half_way_eye;	
+        vec4 half_way_eye;
 	
         for (int i = 0; i < number_of_lights; i++)
         {
-            Ia += lights[i].La * lights[i].Ka;            
+            Ia += lights[i].La * lights[i].Ka;
             n_eye = normalize(vec4(normal_eye, 0.0));
 		
             light_position_eye = view_matrix * lights[i].light_position_world;
@@ -130,5 +136,9 @@ void main() {
 
         // frag_color = (Is_final * 1.0) + (Id_final * 1.0) + (Ia_final * 1.0);
         frag_color = vec4(normal_eye, 1.0);
-    }    
+    }
+    else
+    {
+        frag_color = vec4(normal_eye, 1.0);
+    }
 };

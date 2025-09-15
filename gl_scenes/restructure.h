@@ -6,6 +6,8 @@
 #include <cuda_gl_lighting.h>
 
 #define FIRST_PASS_VERTEX_SHADER_FILE "restructured/first_pass_geometry_shader.vert"
+#define FIRST_PASS_FRAG_SHADER_FILE "restructured/first_pass_geometry_shader.frag"
+
 #define FIRST_PASS_TEXTURE_FRAGMENT_SHADER_FILE "restructured/first_pass_texture_shader.frag"
 #define PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE "restructured/phong_lighting_pass_shader.frag"
 
@@ -307,7 +309,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	first_pass_geometry_shader_resources.shader_directory_path = SHADER_DIRECTORY;
 	first_pass_geometry_shader_resources.vertex_shader_filename = FIRST_PASS_VERTEX_SHADER_FILE;
-	first_pass_geometry_shader_resources.frag_shader_filename = ""; // PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
+	first_pass_geometry_shader_resources.frag_shader_filename = FIRST_PASS_FRAG_SHADER_FILE; // PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
 
 	configure_and_compile_shader_resources(cuda_gl_common, first_pass_geometry_shader_resources);
 	bind_camera_matrices_to_shader_resources(first_pass_geometry_shader_resources);
@@ -317,7 +319,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	phong_lighting_pass_shader_resources.shader_directory_path = SHADER_DIRECTORY;
 	phong_lighting_pass_shader_resources.vertex_shader_filename = ""; // FIRST_PASS_VERTEX_SHADER_FILE;
 	phong_lighting_pass_shader_resources.frag_shader_filename = PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
-	configure_and_compile_shader_resources(cuda_gl_common, phong_lighting_pass_shader_resources);
+	configure_and_compile_shader_resources(cuda_gl_common, phong_lighting_pass_shader_resources);	
 	/**/
 
 	const int number_of_lights = 3;
@@ -330,6 +332,12 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	phong_lighting_handle_resources.associated_shader_program_handle = phong_lighting_pass_shader_resources.shader_program_handle;
 	phong_lighting_handle_resources.vbo_block_lights_location_handle = glGetUniformBlockIndex(phong_lighting_handle_resources.associated_shader_program_handle, "light_source");
+
+	// attach g_buffer textures
+	// glUseProgram(phong_lighting_pass_shader_resources.shader_program_handle);
+	// glUniform1i(glGetUniformLocation(phong_lighting_handle_resources.associated_shader_program_handle, "g_buffer_position"), 0);
+	// glUniform1i(glGetUniformLocation(phong_lighting_handle_resources.associated_shader_program_handle, "g_buffer_normal"), 1);
+	// glUniform1i(glGetUniformLocation(phong_lighting_handle_resources.associated_shader_program_handle, "g_buffer_albedo_spec"), 2);
 	
 	configure_scene_lighting(
 		phong_lighting_handle_resources,
@@ -375,18 +383,30 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 					glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_points_handle);
 					glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_normals_handle);
 					glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_texture_cordinates_handle);
-					// glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
 					
 					glDrawArrays(GL_TRIANGLES, 0, sphere_mesh_resources.mesh_point_count);
 				}
 			}
 
 			// render sphere lighting WIP
-			if (true) {
-
-				glUseProgram(phong_lighting_pass_shader_resources.shader_program_handle);
+			if (false) {
+				
+				glUseProgram(phong_lighting_pass_shader_resources.shader_program_handle);				
 				glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
 
+				// activate textures
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, g_buffer_resources.position_texture_handle);
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, g_buffer_resources.normal_texture_handle);
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, g_buffer_resources.albedo_spec_texture_handle);
+
+				// blit contents from g_buffer
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, g_buffer_resources.g_buffer_handle); // read g_buffer frame buffer
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default frame buffer
+				glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width, window_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
 
 			// draw bunny mesh

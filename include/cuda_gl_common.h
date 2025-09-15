@@ -33,7 +33,6 @@ extern "C" {
 	);
 }
 
-
 // TODO see if this can be put into the class or if this is OK here...
 struct gl_camera_resources {
 	// TODO may need to rethink how the model matrix will be handled
@@ -113,7 +112,7 @@ public:
 		glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
 
 		// wire-frame mode
-		glPolygonMode(GL_FRONT, GL_LINE);
+		// glPolygonMode(GL_FRONT, GL_LINE);
 		// glPolygonMode(GL_BACK, GL_LINE);
 	}
 
