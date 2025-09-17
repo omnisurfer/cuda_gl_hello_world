@@ -12,8 +12,9 @@ in vec2 texture_coordinates;
 
 void main()
 {       
-    g_buffer_position = position_eye;
-    g_buffer_normal = normalize(normal_eye);
+    g_buffer_position = normalize(normal_eye);
+    
+    g_buffer_normal = position_eye; // normalize(normal_eye);
     
     g_buffer_albedo_spec.rgb = texture(texture_diffuse1, texture_coordinates).rgb;
     g_buffer_albedo_spec.a = texture(texture_specular1, texture_coordinates).r;        

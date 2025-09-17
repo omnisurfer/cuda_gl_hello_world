@@ -313,18 +313,19 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	
 	first_pass_geometry_shader_resources.shader_directory_path = SHADER_DIRECTORY;
 	first_pass_geometry_shader_resources.vertex_shader_filename = FIRST_PASS_VERTEX_SHADER_FILE;
-	first_pass_geometry_shader_resources.frag_shader_filename = FIRST_PASS_FRAG_SHADER_FILE; // PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
+	first_pass_geometry_shader_resources.frag_shader_filename = FIRST_PASS_FRAG_SHADER_FILE;
 
 	configure_and_compile_shader_resources(cuda_gl_common, first_pass_geometry_shader_resources);
 	bind_camera_matrices_to_shader_resources(first_pass_geometry_shader_resources);
 
 	/* WIP_20250912 */
 	gl_shader_resources second_pass_deferred_shader_resources;
+	gl_mesh_common_resources second_pass_deferred_shader_mesh_vao_resources;
 
 	second_pass_deferred_shader_resources.shader_directory_path = SHADER_DIRECTORY;
 	second_pass_deferred_shader_resources.vertex_shader_filename = SECOND_PASS_DEFERRED_VERTEX_SHADER_FILE;
 	second_pass_deferred_shader_resources.frag_shader_filename = SECOND_PASS_DEFERRED_FRAGMENT_SHADER_FILE;
-	configure_and_compile_shader_resources(cuda_gl_common, second_pass_deferred_shader_resources);
+	configure_and_compile_shader_resources(cuda_gl_common, second_pass_deferred_shader_resources);	
 	/**/
 
 	gl_lighting_resources phong_lighting_handle_resources;
@@ -375,10 +376,12 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// draw sphere meshes
+			// draw sphere meshes - textures and material properties most likely need to be rendered with geometry due to
+			// having perspective information
 			if (true) {
 				
-				glBindFramebuffer(GL_FRAMEBUFFER, g_buffer_resources.g_buffer_handle);				
+				glBindFramebuffer(GL_FRAMEBUFFER, g_buffer_resources.g_buffer_handle);
+				// glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 				glUseProgram(first_pass_geometry_shader_resources.shader_program_handle);
@@ -402,26 +405,13 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
 
-			// deferred shading WIP
+			// deferred shader render WIP
 			if (true) {
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glUseProgram(second_pass_deferred_shader_resources.shader_program_handle);
-
-				glBindVertexArray(sphere_mesh_resources.vertex_array_object_handle);
-				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_points_handle);
-				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_normals_handle);
-				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_texture_cordinates_handle);
-
-				glDrawArrays(GL_TRIANGLES, 0, sphere_mesh_resources.mesh_point_count);
-			}
-
-			// render sphere lighting WIP
-			if (false) {
 				
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				glUseProgram(second_pass_deferred_shader_resources.shader_program_handle);				
-				glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
-			
+				// glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
+							
 				// activate textures
 				/**/
 				glActiveTexture(GL_TEXTURE0);
@@ -437,6 +427,13 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width, window_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				/**/
+
+				glBindVertexArray(sphere_mesh_resources.vertex_array_object_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_points_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_normals_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_texture_cordinates_handle);
+
+				glDrawArrays(GL_TRIANGLES, 0, sphere_mesh_resources.mesh_point_count);
 			}
 
 			// draw bunny mesh
