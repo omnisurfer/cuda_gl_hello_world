@@ -8,10 +8,15 @@
 #define FIRST_PASS_VERTEX_SHADER_FILE "restructured/first_pass_geometry_shader.vert"
 #define FIRST_PASS_FRAG_SHADER_FILE "restructured/first_pass_geometry_shader.frag"
 
+#define SECOND_PASS_DEFERRED_VERTEX_SHADER_FILE "restructured/second_deferred_shading.vert"
+#define SECOND_PASS_DEFERRED_FRAGMENT_SHADER_FILE "restructured/second_deferred_shading.frag"
+
 #define FIRST_PASS_TEXTURE_FRAGMENT_SHADER_FILE "restructured/first_pass_texture_shader.frag"
+
+#define PHONG_LIGHTING_PASS_VERTEX_SHADER_FILE "restructured/phong_lighting_pass_shader.vert"
 #define PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE "restructured/phong_lighting_pass_shader.frag"
 
-#define SPHERE_MESH_FILE "sphere.obj"
+#define RS_SPHERE_MESH_FILE "sphere.obj"
 #define FLAT_PLANE_MESH_FILE "flat_plane.obj"
 #define BUNNY_MESH_FILE "bunny.obj"
 
@@ -266,7 +271,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 
 	// Sphere Mesh
 	gl_mesh_resources sphere_mesh_resources;
-	ai_scene = cuda_gl_common->assimp_scene_from_file(asset_filename_and_directory + SPHERE_MESH_FILE);
+	ai_scene = cuda_gl_common->assimp_scene_from_file(asset_filename_and_directory + RS_SPHERE_MESH_FILE);
 	cuda_gl_common->assimp_extract_and_load_mesh_from_scene(ai_scene, sphere_mesh_resources);	
 
 	// Bunny Mesh
@@ -304,9 +309,8 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 #pragma endregion
 		
 #pragma region Phong Lighting
-	gl_shader_resources first_pass_geometry_shader_resources;	
-	gl_lighting_resources phong_lighting_handle_resources;
-
+	gl_shader_resources first_pass_geometry_shader_resources;
+	
 	first_pass_geometry_shader_resources.shader_directory_path = SHADER_DIRECTORY;
 	first_pass_geometry_shader_resources.vertex_shader_filename = FIRST_PASS_VERTEX_SHADER_FILE;
 	first_pass_geometry_shader_resources.frag_shader_filename = FIRST_PASS_FRAG_SHADER_FILE; // PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
@@ -315,36 +319,40 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 	bind_camera_matrices_to_shader_resources(first_pass_geometry_shader_resources);
 
 	/* WIP_20250912 */
-	gl_shader_resources phong_lighting_pass_shader_resources;
-	phong_lighting_pass_shader_resources.shader_directory_path = SHADER_DIRECTORY;
-	phong_lighting_pass_shader_resources.vertex_shader_filename = ""; // FIRST_PASS_VERTEX_SHADER_FILE;
-	phong_lighting_pass_shader_resources.frag_shader_filename = PHONG_LIGHTING_PASS_FRAGMENT_SHADER_FILE;
-	configure_and_compile_shader_resources(cuda_gl_common, phong_lighting_pass_shader_resources);	
+	gl_shader_resources second_pass_deferred_shader_resources;
+
+	second_pass_deferred_shader_resources.shader_directory_path = SHADER_DIRECTORY;
+	second_pass_deferred_shader_resources.vertex_shader_filename = SECOND_PASS_DEFERRED_VERTEX_SHADER_FILE;
+	second_pass_deferred_shader_resources.frag_shader_filename = SECOND_PASS_DEFERRED_FRAGMENT_SHADER_FILE;
+	configure_and_compile_shader_resources(cuda_gl_common, second_pass_deferred_shader_resources);
 	/**/
 
+	gl_lighting_resources phong_lighting_handle_resources;
 	const int number_of_lights = 3;
 
 	Light lights[number_of_lights];
-
 	init_light_positions(lights, number_of_lights);
 
 	int size_of_lights_in_bytes = sizeof(lights);
 
-	phong_lighting_handle_resources.associated_shader_program_handle = phong_lighting_pass_shader_resources.shader_program_handle;
+	phong_lighting_handle_resources.associated_shader_program_handle = second_pass_deferred_shader_resources.shader_program_handle;
 	phong_lighting_handle_resources.vbo_block_lights_location_handle = glGetUniformBlockIndex(phong_lighting_handle_resources.associated_shader_program_handle, "light_source");
 
 	// attach g_buffer textures
-	// glUseProgram(phong_lighting_pass_shader_resources.shader_program_handle);
+	// glUseProgram(second_pass_deferred_shader_resources.shader_program_handle);
 	// glUniform1i(glGetUniformLocation(phong_lighting_handle_resources.associated_shader_program_handle, "g_buffer_position"), 0);
 	// glUniform1i(glGetUniformLocation(phong_lighting_handle_resources.associated_shader_program_handle, "g_buffer_normal"), 1);
 	// glUniform1i(glGetUniformLocation(phong_lighting_handle_resources.associated_shader_program_handle, "g_buffer_albedo_spec"), 2);
 	
-	configure_scene_lighting(
-		phong_lighting_handle_resources,
-		lights,
-		number_of_lights,
-		size_of_lights_in_bytes
-	);
+	// DEBUG_20250916
+	if (false) {
+		configure_scene_lighting(
+			phong_lighting_handle_resources,
+			lights,
+			number_of_lights,
+			size_of_lights_in_bytes
+		);
+	}
 #pragma endregion
 
 	cuda_gl_common->set_opengl_flags();
@@ -362,13 +370,17 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 			main_camera.configure_camera(window_width, window_height);						
 			
 			/* Clear the drawing sruface */
-			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);		
+			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+			// glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glViewport(0, 0, window_width, window_height);			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// draw sphere meshes
 			if (true) {
 				
+				glBindFramebuffer(GL_FRAMEBUFFER, g_buffer_resources.g_buffer_handle);				
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 				glUseProgram(first_pass_geometry_shader_resources.shader_program_handle);
 				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_view_matrix_handle , 1, GL_FALSE, main_camera.view_matrix.m);
 				glUniformMatrix4fv(first_pass_geometry_shader_resources.gl_camera_resources.vbo_projection_matrix_handle, 1, GL_FALSE, main_camera.projection_matrix.m);
@@ -386,15 +398,32 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 					
 					glDrawArrays(GL_TRIANGLES, 0, sphere_mesh_resources.mesh_point_count);
 				}
+
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+
+			// deferred shading WIP
+			if (true) {
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glUseProgram(second_pass_deferred_shader_resources.shader_program_handle);
+
+				glBindVertexArray(sphere_mesh_resources.vertex_array_object_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_points_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_normals_handle);
+				glBindBuffer(GL_ARRAY_BUFFER, sphere_mesh_resources.vbo_mesh_texture_cordinates_handle);
+
+				glDrawArrays(GL_TRIANGLES, 0, sphere_mesh_resources.mesh_point_count);
 			}
 
 			// render sphere lighting WIP
 			if (false) {
 				
-				glUseProgram(phong_lighting_pass_shader_resources.shader_program_handle);				
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glUseProgram(second_pass_deferred_shader_resources.shader_program_handle);				
 				glBindBuffer(GL_UNIFORM_BUFFER, phong_lighting_handle_resources.vbo_lighting_handle);
-
+			
 				// activate textures
+				/**/
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, g_buffer_resources.position_texture_handle);
 				glActiveTexture(GL_TEXTURE1);
@@ -407,6 +436,7 @@ int code_restructured_scene(GLFWwindow* window, CUDAGLCommon* cuda_gl_common) {
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default frame buffer
 				glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width, window_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				/**/
 			}
 
 			// draw bunny mesh

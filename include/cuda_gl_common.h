@@ -64,6 +64,13 @@ struct gl_lighting_resources {
 	GLuint associated_shader_program_handle;
 };
 
+struct gl_mesh_common_resources {
+	GLuint vertex_array_object_handle;
+	GLuint vbo_mesh_points_handle;
+	GLuint vbo_mesh_normals_handle;
+	GLuint vbo_mesh_texture_cordinates_handle;
+};
+
 struct gl_mesh_resources {
 	GLuint vertex_array_object_handle;
 	GLuint vbo_mesh_points_handle;
@@ -112,7 +119,7 @@ public:
 		glFrontFace(GL_CCW);		// GL_CCW for counter clock-wise
 
 		// wire-frame mode
-		// glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_FRONT, GL_LINE);
 		// glPolygonMode(GL_BACK, GL_LINE);
 	}
 
@@ -439,5 +446,24 @@ public:
 		}
 	
 		return success;
+	}
+
+	// WIP_20250916
+	bool configure_mesh_common_vao_object_resources(gl_mesh_common_resources& gl_mesh_commong_resources) {
+	
+		glGenVertexArrays(1, &(gl_mesh_commong_resources.vertex_array_object_handle));
+		glBindVertexArray(gl_mesh_commong_resources.vertex_array_object_handle);
+
+		// points handle
+		glGenBuffers(1, &gl_mesh_commong_resources.vbo_mesh_points_handle);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_mesh_commong_resources.vbo_mesh_points_handle);
+
+		glGenBuffers(1, &gl_mesh_commong_resources.vbo_mesh_normals_handle);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_mesh_commong_resources.vbo_mesh_normals_handle);
+
+		glGenBuffers(1, &gl_mesh_commong_resources.vbo_mesh_texture_cordinates_handle);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_mesh_commong_resources.vbo_mesh_texture_cordinates_handle);
+
+		return true;
 	}
 };

@@ -26,9 +26,9 @@ struct Light
 uniform mat4 view_matrix;
 
 // DEBUG TEXTURE SAMPLES
-// uniform sampler2D g_buffer_position;
-// uniform sampler2D g_buffer_normal;
-// uniform sampler2D g_buffer_albedo_spec;
+uniform sampler2D g_buffer_position;
+uniform sampler2D g_buffer_normal;
+uniform sampler2D g_buffer_albedo_spec;
 
 layout(std140) uniform light_source {
 uniform Light lights[number_of_lights];
@@ -37,7 +37,7 @@ uniform Light lights[number_of_lights];
 in vec3 position_eye, normal_eye;
 in vec2 texture_coordinates;
 
-out vec4 frag_color;
+layout (location = 0) out vec4 frag_color;
 
 void main() {
     
@@ -139,6 +139,8 @@ void main() {
     }
     else
     {
-        frag_color = vec4(normal_eye, 1.0);
+        // frag_color = vec4(normal_eye, 1.0);
+        frag_color = vec4(1.0, 0.0, 0.0, 1.0);
+
     }
 };
